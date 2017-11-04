@@ -1,0 +1,7 @@
+[[constraint]]
+  name = "github.com/rjeczalik/notify"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.3"

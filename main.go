@@ -21,37 +21,45 @@ func checkGPGCardStatus() *exec.Cmd {
 	return cmd
 }
 
-func checkGPG() {
-	for i := 0; i < 20; i++ {
-		cmd := checkGPGCardStatus()
-		timer := time.AfterFunc(100*time.Millisecond, func() {
-			cmd.Process.Kill()
-		})
-		err := cmd.Wait()
-		timer.Stop()
+func checkGPGOnRequest(requestGPGCheck chan bool) {
+	for {
+		<-requestGPGCheck
 
-		if err != nil {
-			log.Debug("GPG START")
-			checkGPGCardStatus().Wait()
-			log.Debug("GPG STOP")
-			break
+		for i := 0; i < 20; i++ {
+			cmd := checkGPGCardStatus()
+			timer := time.AfterFunc(100*time.Millisecond, func() {
+				cmd.Process.Kill()
+			})
+			err := cmd.Wait()
+			timer.Stop()
+
+			if err != nil {
+				log.Debug("GPG START")
+				checkGPGCardStatus().Wait()
+				log.Debug("GPG STOP")
+				break
+			}
 		}
 	}
 }
 
-func watchGPG() {
+func watchGPG(requestGPGCheck chan bool) {
 	// We are only interested in the first event, should skip all subsequent ones
 	events := make(chan notify.EventInfo)
 	file := os.ExpandEnv("$HOME/.gnupg/pubring.kbx")
 	if err := notify.Watch(file, events, notify.InOpen); err != nil {
-		log.Fatal(err)
+		log.Error("Cannot establish a watch on GPG file: ", err)
+		return
 	}
 	defer notify.Stop(events)
 
 	for {
 		select {
 		case <-events:
-			checkGPG()
+			select {
+			case requestGPGCheck <- true:
+			default:
+			}
 		}
 	}
 }
@@ -61,7 +69,8 @@ func watchU2F() {
 	events := make(chan notify.EventInfo, 10)
 	file := os.ExpandEnv("$HOME/.config/Yubico/u2f_keys")
 	if err := notify.Watch(file, events, notify.InOpen); err != nil {
-		log.Fatal(err)
+		log.Error("Cannot establish a watch on U2F file: ", err)
+		return
 	}
 	defer notify.Stop(events)
 
@@ -75,7 +84,7 @@ func watchU2F() {
 	}
 }
 
-func watchSSH(proxySocket net.Listener, originalSocketFile string) {
+func watchSSH(proxySocket net.Listener, originalSocketFile string, requestGPGCheck chan bool) {
 	for {
 		proxyConnection, err := proxySocket.Accept()
 		if err != nil {
@@ -89,12 +98,12 @@ func watchSSH(proxySocket net.Listener, originalSocketFile string) {
 			return
 		}
 
-		go proxyUnixSocket(proxyConnection, originalConnection, "proxy")
-		go proxyUnixSocket(originalConnection, proxyConnection, "original")
+		go proxyUnixSocket(proxyConnection, originalConnection, requestGPGCheck, "proxy")
+		go proxyUnixSocket(originalConnection, proxyConnection, requestGPGCheck, "original")
 	}
 }
 
-func setupWatchSSH() chan bool {
+func setupWatchSSH(requestGPGCheck chan bool) chan bool {
 	socketFile := os.Getenv("SSH_AUTH_SOCK")
 	if _, err := os.Stat(socketFile); err != nil {
 		log.Error("Cannot watch SSH, $SSH_AUTH_SOCK does not exist: ", err)
@@ -133,12 +142,12 @@ func setupWatchSSH() chan bool {
 		exit <- true
 	}()
 
-	go watchSSH(proxySocket, originalSocketFile)
+	go watchSSH(proxySocket, originalSocketFile, requestGPGCheck)
 
 	return exit
 }
 
-func proxyUnixSocket(reader net.Conn, writer net.Conn, id string) {
+func proxyUnixSocket(reader net.Conn, writer net.Conn, requestGPGCheck chan bool, id string) {
 	defer (func() {
 		reader.Close()
 		writer.Close()
@@ -149,7 +158,7 @@ func proxyUnixSocket(reader net.Conn, writer net.Conn, id string) {
 		nr, err := reader.Read(buf)
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("[%v] Error reading from the socket: %v", id, err)
+				log.Debugf("[%v] Error reading from the socket: %v", id, err)
 			}
 			return
 		}
@@ -158,12 +167,15 @@ func proxyUnixSocket(reader net.Conn, writer net.Conn, id string) {
 		_, err = writer.Write(data)
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("[%v] Error writing to the socket: %v", id, err)
+				log.Debugf("[%v] Error writing to the socket: %v", id, err)
 			}
 			return
 		}
 
-		checkGPG()
+		select {
+		case requestGPGCheck <- true:
+		default:
+		}
 	}
 }
 
@@ -189,8 +201,13 @@ func main() {
 	}()
 
 	go watchU2F()
-	go watchGPG()
-	exitSSH := setupWatchSSH()
+
+	requestGPGCheck := make(chan bool)
+	go checkGPGOnRequest(requestGPGCheck)
+
+	go watchGPG(requestGPGCheck)
+
+	exitSSH := setupWatchSSH(requestGPGCheck)
 	if exitSSH != nil {
 		exits = append(exits, exitSSH)
 	}

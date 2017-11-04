@@ -1,8 +1,12 @@
 package main
 
 import (
+	"io"
+	"net"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/rjeczalik/notify"
@@ -71,11 +75,125 @@ func watchU2F() {
 	}
 }
 
+func watchSSH(proxySocket net.Listener, originalSocketFile string) {
+	for {
+		proxyConnection, err := proxySocket.Accept()
+		if err != nil {
+			log.Error("Cannot accept incoming proxy connection: ", err)
+			return
+		}
+		originalConnection, err := net.Dial("unix", originalSocketFile)
+		if err != nil {
+			log.Error("Cannot establish connection to original socket: ", err)
+			proxyConnection.Close()
+			return
+		}
+
+		go proxyUnixSocket(proxyConnection, originalConnection, "proxy")
+		go proxyUnixSocket(originalConnection, proxyConnection, "original")
+	}
+}
+
+func setupWatchSSH() chan bool {
+	socketFile := os.Getenv("SSH_AUTH_SOCK")
+	if _, err := os.Stat(socketFile); err != nil {
+		log.Error("Cannot watch SSH, $SSH_AUTH_SOCK does not exist: ", err)
+		return nil
+	}
+
+	originalSocketFile := socketFile + ".original"
+	if _, err := os.Stat(originalSocketFile); err == nil {
+		log.Error("Cannot watch SSH, $SSH_AUTH_SOCK.original already exists")
+		return nil
+	}
+
+	if err := os.Rename(socketFile, originalSocketFile); err != nil {
+		log.Error("Cannot move original SSH socket file to setup a proxy: ", err)
+		return nil
+	}
+
+	proxySocket, err := net.Listen("unix", socketFile)
+	if err != nil {
+		log.Error("Cannot establish a proxy SSH socket: ", err)
+		if err := os.Rename(originalSocketFile, socketFile); err != nil {
+			log.Error("Cannot restore original SSH socket: ", err)
+		}
+		return nil
+	}
+
+	exit := make(chan bool)
+	go func() {
+		<-exit
+		if err := proxySocket.Close(); err != nil {
+			log.Error("Cannot cleanup proxy SSH socket: ", err)
+		}
+		if err := os.Rename(originalSocketFile, socketFile); err != nil {
+			log.Error("Cannot restore original SSH socket: ", err)
+		}
+		exit <- true
+	}()
+
+	go watchSSH(proxySocket, originalSocketFile)
+
+	return exit
+}
+
+func proxyUnixSocket(reader net.Conn, writer net.Conn, id string) {
+	defer (func() {
+		reader.Close()
+		writer.Close()
+	})()
+
+	buf := make([]byte, 10240)
+	for {
+		nr, err := reader.Read(buf)
+		if err != nil {
+			if err != io.EOF {
+				log.Printf("[%v] Error reading from the socket: %v", id, err)
+			}
+			return
+		}
+
+		data := buf[0:nr]
+		_, err = writer.Write(data)
+		if err != nil {
+			if err != io.EOF {
+				log.Printf("[%v] Error writing to the socket: %v", id, err)
+			}
+			return
+		}
+
+		checkGPG()
+	}
+}
+
 func main() {
 	log.SetLevel(log.DebugLevel)
 
+	log.Info("Starting Yubikey touch detector")
+
+	exits := []chan bool{}
+	exitSignal := make(chan os.Signal, 1)
+	signal.Notify(exitSignal, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-exitSignal
+		println()
+
+		for _, exit := range exits {
+			exit <- true // Notify exit watcher
+			<-exit       // Wait for confirmation
+		}
+
+		log.Info("Stopping Yubikey touch detector")
+		os.Exit(0)
+	}()
+
 	go watchU2F()
 	go watchGPG()
+	exitSSH := setupWatchSSH()
+	if exitSSH != nil {
+		exits = append(exits, exitSSH)
+	}
 
 	wait := make(chan bool)
 	<-wait

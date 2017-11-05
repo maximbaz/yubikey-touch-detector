@@ -3,6 +3,7 @@ package detector
 import (
 	"net"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -36,7 +37,7 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	}
 
 	exit := make(chan bool)
-	exits["ssh"] = exit
+	exits["detector/ssh"] = exit
 	go func() {
 		<-exit
 		if err := proxySocket.Close(); err != nil {
@@ -51,7 +52,9 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	for {
 		proxyConnection, err := proxySocket.Accept()
 		if err != nil {
-			log.Error("Cannot accept incoming proxy connection: ", err)
+			if !strings.Contains(err.Error(), "use of closed network connection") {
+				log.Error("Cannot accept incoming proxy connection: ", err)
+			}
 			return
 		}
 		originalConnection, err := net.Dial("unix", originalSocketFile)

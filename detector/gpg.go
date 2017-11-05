@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/maximbaz/yubikey-touch-detector/notifier"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
 )
@@ -33,7 +34,7 @@ func WatchGPG(requestGPGCheck chan bool) {
 }
 
 // CheckGPGOnRequest checks whether Yubikey is actually waiting for a touch on a GPG request
-func CheckGPGOnRequest(requestGPGCheck chan bool) {
+func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers map[string]chan notifier.Message) {
 	for {
 		<-requestGPGCheck
 
@@ -46,9 +47,15 @@ func CheckGPGOnRequest(requestGPGCheck chan bool) {
 			timer.Stop()
 
 			if err != nil {
-				log.Debug("GPG START")
+				for _, n := range notifiers {
+					n <- notifier.GPG_ON
+				}
+
 				checkGPGCardStatus().Wait()
-				log.Debug("GPG STOP")
+
+				for _, n := range notifiers {
+					n <- notifier.GPG_OFF
+				}
 				break
 			}
 		}

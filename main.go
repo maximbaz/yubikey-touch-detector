@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/maximbaz/yubikey-touch-detector/detector"
+	"github.com/maximbaz/yubikey-touch-detector/notifier"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,10 +17,14 @@ func main() {
 	exits := make(map[string]chan bool)
 	go setupExitSignalWatch(exits)
 
-	requestGPGCheck := make(chan bool)
-	go detector.CheckGPGOnRequest(requestGPGCheck)
+	notifiers := make(map[string]chan notifier.Message)
+	go notifier.SetupStdOutNotifier(notifiers)
+	go notifier.SetupUnixSocketNotifier(notifiers, exits)
 
-	go detector.WatchU2F()
+	requestGPGCheck := make(chan bool)
+	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
+
+	go detector.WatchU2F(notifiers)
 	go detector.WatchGPG(requestGPGCheck)
 	go detector.WatchSSH(requestGPGCheck, exits)
 

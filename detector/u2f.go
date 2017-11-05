@@ -3,12 +3,13 @@ package detector
 import (
 	"os"
 
+	"github.com/maximbaz/yubikey-touch-detector/notifier"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
 )
 
 // WatchU2F watches when YubiKey is waiting for a touch on a U2F request
-func WatchU2F() {
+func WatchU2F(notifiers map[string]chan notifier.Message) {
 	// It's important to not miss a single event, so have a small buffer
 	events := make(chan notify.EventInfo, 10)
 	file := os.ExpandEnv("$HOME/.config/Yubico/u2f_keys")
@@ -21,9 +22,15 @@ func WatchU2F() {
 	for {
 		select {
 		case <-events:
-			log.Debugln("U2F START")
+			for _, n := range notifiers {
+				n <- notifier.U2F_ON
+			}
+
 			<-events
-			log.Debugln("U2F STOP")
+
+			for _, n := range notifiers {
+				n <- notifier.U2F_OFF
+			}
 		}
 	}
 }

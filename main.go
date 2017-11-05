@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,14 +12,22 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-	log.Info("Starting Yubikey touch detector")
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "print verbose output")
+	flag.Parse()
+
+	if verbose {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	log.Debug("Starting Yubikey touch detector")
 
 	exits := make(map[string]chan bool)
 	go setupExitSignalWatch(exits)
 
 	notifiers := make(map[string]chan notifier.Message)
-	go notifier.SetupStdOutNotifier(notifiers)
+	go notifier.SetupStdErrNotifier(notifiers)
 	go notifier.SetupUnixSocketNotifier(notifiers, exits)
 
 	requestGPGCheck := make(chan bool)
@@ -44,6 +53,6 @@ func setupExitSignalWatch(exits map[string]chan bool) {
 		<-exit       // Wait for confirmation
 	}
 
-	log.Info("Stopping Yubikey touch detector")
+	log.Debug("Stopping Yubikey touch detector")
 	os.Exit(0)
 }

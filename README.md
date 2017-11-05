@@ -49,14 +49,18 @@ First of all, make sure the app is running (e.g. wrap it in a systemd user servi
 
 Next, in order to integrate the app with other UI components to display a visible indicator, use any of the available notifiers in the `notifier` subpackage.
 
-For example, `notifier/unix_socket` allows anyone to connect to the socket `$XDG_RUNTIME_DIR/yubikey-touch-detector.socket` and receive the following events:
+##### notifier/unix_socket
+
+`unix_socket` notifier allows anyone to connect to the socket `$XDG_RUNTIME_DIR/yubikey-touch-detector.socket` and receive the following events:
 
 | event   | description                                        |
 |---------|----------------------------------------------------|
-| GPG_ON  | when a `gpg` operation started waiting for a touch |
-| GPG_OFF | when a `gpg` operation stopped waiting for a touch |
-| U2F_ON  | when `pam-u2f` started waiting for a touch         |
-| U2F_OFF | when `pam-u2f` stopped waiting for a touch         |
+| `GPG_1` | when a `gpg` operation started waiting for a touch |
+| `GPG_0` | when a `gpg` operation stopped waiting for a touch |
+| `U2F_1` | when `pam-u2f` started waiting for a touch         |
+| `U2F_0` | when `pam-u2f` stopped waiting for a touch         |
+
+All messages have a fixed length of 5 bytes to simplify the code on the receiving side.
 
 
 ## How it works

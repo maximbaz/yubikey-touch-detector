@@ -11,7 +11,15 @@ For example, an integration with [i3wm](https://i3wm.org/) and [py3status](https
 
 ## Installation
 
-The app is available as an AUR package: **TODO**
+The app is available as an AUR package: [yubikey-touch-detector](https://aur.archlinux.org/packages/yubikey-touch-detector)
+
+The package also installs a systemd service, make sure to start and enable it:
+
+```
+$ systemctl --user daemon-reload
+$ systemctl --user start yubikey-touch-detector.service
+$ systemctl --user enable yubikey-touch-detector.service
+```
 
 Alternatively install it with `go`:
 

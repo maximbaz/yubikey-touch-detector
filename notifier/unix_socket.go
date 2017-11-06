@@ -12,14 +12,19 @@ import (
 // SetupUnixSocketNotifier configures a unix socket to transmit touch requests to other apps
 func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string]chan bool) {
 	socketDir := os.Getenv("XDG_RUNTIME_DIR")
+	if socketDir == "" {
+		log.Error("Cannot setup unix socket notifier, $XDG_RUNTIME_DIR is not defined.")
+		return
+	}
+
 	if _, err := os.Stat(socketDir); err != nil {
-		log.Error("Cannot setup unix socket notifier, $XDG_RUNTIME_DIR does not exist: ", err)
+		log.Errorf("Cannot setup unix socket notifier, folder '%v' does not exist: %v", socketDir, err)
 		return
 	}
 
 	socketFile := path.Join(socketDir, "yubikey-touch-detector.socket")
 	if _, err := os.Stat(socketFile); err == nil {
-		log.Errorf("Cannot setup unix socket notifier, %v already exists\n", socketFile)
+		log.Errorf("Cannot setup unix socket notifier, '%v' already exists\n", socketFile)
 		return
 	}
 

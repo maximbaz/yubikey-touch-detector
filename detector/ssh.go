@@ -3,6 +3,7 @@ package detector
 import (
 	"net"
 	"os"
+	"path"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -11,14 +12,23 @@ import (
 // WatchSSH watches for hints that YubiKey is maybe waiting for a touch on a SSH auth request
 func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	socketFile := os.Getenv("SSH_AUTH_SOCK")
+	if socketFile == "" {
+		runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+		if runtimeDir == "" {
+			log.Error("Cannot watch SSH, neither $SSH_AUTH_SOCK nor $XDG_RUNTIME_DIR are defined.")
+			return
+		}
+		socketFile = path.Join(runtimeDir, "gnupg/S.gpg-agent.ssh")
+	}
+
 	if _, err := os.Stat(socketFile); err != nil {
-		log.Error("Cannot watch SSH, $SSH_AUTH_SOCK does not exist: ", err)
+		log.Errorf("Cannot watch SSH, the socket '%v' does not exist: %v\n", socketFile, err)
 		return
 	}
 
 	originalSocketFile := socketFile + ".original"
 	if _, err := os.Stat(originalSocketFile); err == nil {
-		log.Error("Cannot watch SSH, $SSH_AUTH_SOCK.original already exists")
+		log.Errorf("Cannot watch SSH, '%v' already exists\n", originalSocketFile)
 		return
 	}
 

@@ -14,7 +14,7 @@ func WatchU2F(notifiers map[string]chan notifier.Message) {
 	events := make(chan notify.EventInfo, 10)
 	file := os.ExpandEnv("$HOME/.config/Yubico/u2f_keys")
 	if err := notify.Watch(file, events, notify.InOpen); err != nil {
-		log.Error("Cannot establish a watch on U2F file: ", err)
+		log.Errorf("Cannot establish a watch on U2F file '%v': %v\n", file, err)
 		return
 	}
 	defer notify.Stop(events)

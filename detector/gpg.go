@@ -3,6 +3,7 @@ package detector
 import (
 	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
@@ -16,8 +17,12 @@ func WatchGPG(requestGPGCheck chan bool) {
 	// we are interested only in the first event, it's ok to skip all subsequent ones
 	events := make(chan notify.EventInfo)
 	file := os.ExpandEnv("$HOME/.gnupg/pubring.kbx")
+	gpgHome := os.Getenv("GNUPGHOME")
+	if gpgHome != "" {
+		file = path.Join(gpgHome, "pubring.kbx")
+	}
 	if err := notify.Watch(file, events, notify.InOpen); err != nil {
-		log.Error("Cannot establish a watch on GPG file: ", err)
+		log.Errorf("Cannot establish a watch on GPG file '%v': %v\n", file, err)
 		return
 	}
 	defer notify.Stop(events)

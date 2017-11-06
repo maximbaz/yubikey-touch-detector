@@ -21,7 +21,9 @@ $ systemctl --user start yubikey-touch-detector.service
 $ systemctl --user enable yubikey-touch-detector.service
 ```
 
-Alternatively install it with `go`:
+Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).
+
+Finally you can install the app with `go`:
 
 ```
 $ go get -u github.com/maximbaz/yubikey-touch-detector

@@ -91,13 +91,17 @@ In order to detect when `pam-u2f` requests a touch on YubiKey, you first need to
 
 With that in place, `pam-u2f` will open `$HOME/.config/Yubico/u2f_keys` every time it starts and stops waiting for a touch.
 
+> If the path to your `u2f_keys` file differs, provide it via `--u2f-keys-path` CLI argument.
+
 This app will thus watch for `OPEN` events on that file, and when event occurs will toggle the touch indicator.
 
 ### Detecting gpg operations
 
 This detection is based on a "busy check" - when the card is busy (i.e. `gpg --card-status` hangs), it is assumed that it is waiting on a touch. This of course leads to false positives, when the card is busy for other reasons, but it is a good guess anyway.
 
-In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after `$HOME/.gnupg/pubring.kbx` file is opened (the app is thus watching for `OPEN` events on that file).
+In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after `$GNUPGHOME/pubring.kbx` (or `$HOME/.gnupg/pubring.kbx`) file is opened (the app is thus watching for `OPEN` events on that file).
+
+> If the path to your `pubring.kbx` file differs, provide it via `--gpg-pubring-path` CLI argument.
 
 ### Detecting ssh operations
 

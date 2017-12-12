@@ -1,9 +1,7 @@
 package detector
 
 import (
-	"os"
 	"os/exec"
-	"path"
 	"time"
 
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
@@ -12,17 +10,12 @@ import (
 )
 
 // WatchGPG watches for hints that YubiKey is maybe waiting for a touch on a GPG request
-func WatchGPG(requestGPGCheck chan bool) {
+func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 	// No need for a buffered channel,
 	// we are interested only in the first event, it's ok to skip all subsequent ones
 	events := make(chan notify.EventInfo)
-	file := os.ExpandEnv("$HOME/.gnupg/pubring.kbx")
-	gpgHome := os.Getenv("GNUPGHOME")
-	if gpgHome != "" {
-		file = path.Join(gpgHome, "pubring.kbx")
-	}
-	if err := notify.Watch(file, events, notify.InOpen); err != nil {
-		log.Errorf("Cannot establish a watch on GPG file '%v': %v\n", file, err)
+	if err := notify.Watch(gpgPubringPath, events, notify.InOpen); err != nil {
+		log.Errorf("Cannot establish a watch on gpg's pubring.kbx file '%v': %v\n", gpgPubringPath, err)
 		return
 	}
 	defer notify.Stop(events)

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"github.com/maximbaz/yubikey-touch-detector/detector"
@@ -12,13 +13,31 @@ import (
 )
 
 func main() {
+	defaultGpgPubringPath := "$GNUPGHOME/pubring.kbx or $HOME/.gnupg/pubring.kbx"
+
 	var verbose bool
+	var u2fKeysPath string
+	var gpgPubringPath string
 	flag.BoolVar(&verbose, "v", false, "print verbose output")
+	flag.StringVar(&u2fKeysPath, "u2f-keys-path", "$HOME/.config/Yubico/u2f_keys", "path to u2f_keys file")
+	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", defaultGpgPubringPath, "path to gpg's pubring.kbx file")
 	flag.Parse()
 
 	if verbose {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	if gpgPubringPath == defaultGpgPubringPath {
+		gpgHome := os.Getenv("GNUPGHOME")
+		if gpgHome != "" {
+			gpgPubringPath = path.Join(gpgHome, "pubring.kbx")
+		} else {
+			gpgPubringPath = "$HOME/.gnupg/pubring.kbx"
+		}
+	}
+
+	u2fKeysPath = os.ExpandEnv(u2fKeysPath)
+	gpgPubringPath = os.ExpandEnv(gpgPubringPath)
 
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.Debug("Starting Yubikey touch detector")
@@ -33,8 +52,8 @@ func main() {
 	requestGPGCheck := make(chan bool)
 	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
 
-	go detector.WatchU2F(notifiers)
-	go detector.WatchGPG(requestGPGCheck)
+	go detector.WatchU2F(u2fKeysPath, notifiers)
+	go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
 	go detector.WatchSSH(requestGPGCheck, exits)
 
 	wait := make(chan bool)

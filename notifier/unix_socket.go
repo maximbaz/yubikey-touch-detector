@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -48,12 +49,15 @@ func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string
 	notifiers["notifier/unix_socket"] = touch
 
 	touchListeners := make(map[*net.Conn]chan []byte)
+	touchListenersMutex := sync.RWMutex{}
 	go func() {
 		for {
 			value := <-touch
+			touchListenersMutex.RLock()
 			for _, listener := range touchListeners {
 				listener <- []byte(value)
 			}
+			touchListenersMutex.RUnlock()
 		}
 	}()
 
@@ -66,15 +70,19 @@ func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string
 			return
 		}
 
-		go notify(listener, touchListeners)
+		go notify(listener, touchListeners, &touchListenersMutex)
 	}
 }
 
-func notify(listener net.Conn, touchListeners map[*net.Conn]chan []byte) {
+func notify(listener net.Conn, touchListeners map[*net.Conn]chan []byte, touchListenersMutex *sync.RWMutex) {
 	values := make(chan []byte)
+	touchListenersMutex.Lock()
 	touchListeners[&listener] = values
+	touchListenersMutex.Unlock()
 	defer (func() {
+		touchListenersMutex.Lock()
 		delete(touchListeners, &listener)
+		touchListenersMutex.Unlock()
 		listener.Close()
 	})()
 

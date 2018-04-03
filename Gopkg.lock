@@ -5,25 +5,28 @@
   branch = "master"
   name = "github.com/rjeczalik/notify"
   packages = ["."]
-  revision = "767eb674ef14b09119b2fff3601e64558d530c47"
+  revision = "d152f3ce359a5464dc41e84a8919fc67e55bbbf0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
-  version = "v1.0.3"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "bd6f299fb381e4c3393d1c4b1f0b94f5e77650c8"
+  revision = "b2aa35443fbc700ab74c586ae79b81c171851023"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
-  revision = "4fe5d7925040acd225bf9c7cee65e82d07f06bff"
+  packages = [
+    "unix",
+    "windows"
+  ]
+  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
 
 [solve-meta]
   analyzer-name = "dep"

@@ -14,18 +14,32 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 	// No need for a buffered channel,
 	// we are interested only in the first event, it's ok to skip all subsequent ones
 	events := make(chan notify.EventInfo)
-	if err := notify.Watch(gpgPubringPath, events, notify.InOpen); err != nil {
-		log.Errorf("Cannot establish a watch on gpg's pubring.kbx file '%v': %v\n", gpgPubringPath, err)
-		return
+
+	initWatcher := func() {
+		if err := notify.Watch(gpgPubringPath, events, notify.InOpen, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
+			log.Errorf("Cannot establish a watch on gpg's pubring.kbx file '%v': %v\n", gpgPubringPath, err)
+			return
+		}
+		log.Debug("GPG watcher is successfully established")
 	}
+
+	initWatcher()
 	defer notify.Stop(events)
 
 	for {
 		select {
-		case <-events:
-			select {
-			case requestGPGCheck <- true:
+		case event := <-events:
+			switch event.Event() {
+			case notify.InOpen:
+				select {
+				case requestGPGCheck <- true:
+				default:
+				}
 			default:
+				log.Debugf("pubring.kbx received file event '%+v', recreating the watcher.\n", event.Event())
+				notify.Stop(events)
+				time.Sleep(5 * time.Second)
+				initWatcher()
 			}
 		}
 	}

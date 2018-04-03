@@ -45,6 +45,7 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 		}
 		return
 	}
+	log.Debug("SSH watcher is successfully established")
 
 	exit := make(chan bool)
 	exits["detector/ssh"] = exit

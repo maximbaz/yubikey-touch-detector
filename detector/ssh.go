@@ -22,13 +22,13 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	}
 
 	if _, err := os.Stat(socketFile); err != nil {
-		log.Errorf("Cannot watch SSH, the socket '%v' does not exist: %v\n", socketFile, err)
+		log.Errorf("Cannot watch SSH, the socket '%v' does not exist: %v", socketFile, err)
 		return
 	}
 
 	originalSocketFile := socketFile + ".original"
 	if _, err := os.Stat(originalSocketFile); err == nil {
-		log.Errorf("Cannot watch SSH, '%v' already exists\n", originalSocketFile)
+		log.Errorf("Cannot watch SSH, '%v' already exists", originalSocketFile)
 		return
 	}
 

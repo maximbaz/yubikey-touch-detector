@@ -17,7 +17,7 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 
 	initWatcher := func() {
 		if err := notify.Watch(gpgPubringPath, events, notify.InOpen, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
-			log.Errorf("Cannot establish a watch on gpg's pubring.kbx file '%v': %v\n", gpgPubringPath, err)
+			log.Errorf("Cannot establish a watch on gpg's pubring.kbx file '%v': %v", gpgPubringPath, err)
 			return
 		}
 		log.Debug("GPG watcher is successfully established")
@@ -36,7 +36,7 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 				default:
 				}
 			default:
-				log.Debugf("pubring.kbx received file event '%+v', recreating the watcher.\n", event.Event())
+				log.Debugf("pubring.kbx received file event '%+v', recreating the watcher.", event.Event())
 				notify.Stop(events)
 				time.Sleep(5 * time.Second)
 				initWatcher()

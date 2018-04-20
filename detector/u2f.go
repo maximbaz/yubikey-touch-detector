@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"os"
 	"time"
 
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
@@ -9,15 +10,19 @@ import (
 )
 
 // WatchU2F watches when YubiKey is waiting for a touch on a U2F request
-func WatchU2F(u2fKeysPath string, notifiers map[string]chan notifier.Message) {
+func WatchU2F(u2fLockPath string, notifiers map[string]chan notifier.Message) {
 	// It's important to not miss a single event, so have a small buffer
 	events := make(chan notify.EventInfo, 10)
-	isOn := false
+	openCounter := 0
 
 	initWatcher := func() {
-		isOn = false
-		if err := notify.Watch(u2fKeysPath, events, notify.InOpen, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
-			log.Errorf("Cannot establish a watch on u2f_keys file '%v': %v\n", u2fKeysPath, err)
+		// Ensure the file exists (pam-u2f doesn't create it beforehand)
+		os.Create(u2fLockPath)
+
+		// Setup the watcher
+		openCounter = 0
+		if err := notify.Watch(u2fLockPath, events, notify.InOpen, notify.InCloseWrite, notify.InCloseNowrite, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
+			log.Errorf("Cannot establish a watch on u2f lock file '%v': %v", u2fLockPath, err)
 			return
 		}
 		log.Debug("U2F watcher is successfully established")
@@ -31,18 +36,28 @@ func WatchU2F(u2fKeysPath string, notifiers map[string]chan notifier.Message) {
 		case event := <-events:
 			switch event.Event() {
 			case notify.InOpen:
-				isOn = !isOn
-				for _, n := range notifiers {
-					if isOn {
+				openCounter++
+				if openCounter == 1 {
+					for _, n := range notifiers {
 						n <- notifier.U2F_ON
-					} else {
+					}
+				}
+			case notify.InCloseWrite:
+			case notify.InCloseNowrite:
+				if openCounter == 0 {
+					log.Debugf("u2f received an unmatched close event, ignoring it.")
+					break
+				}
+				openCounter--
+				if openCounter == 0 {
+					for _, n := range notifiers {
 						n <- notifier.U2F_OFF
 					}
 				}
 			default:
-				log.Debugf("u2f_keys received file event '%+v', recreating the watcher.\n", event.Event())
+				log.Debugf("u2f received file event '%+v', recreating the watcher.", event.Event())
 				notify.Stop(events)
-				if isOn {
+				if openCounter > 0 {
 					for _, n := range notifiers {
 						n <- notifier.U2F_OFF
 					}

@@ -6,8 +6,7 @@ For example, an integration with [i3wm](https://i3wm.org/) and [py3status](https
 
 ![demo](./demo.gif)
 
-*See also: [FAQ: Which UI components are already integrated with this app?](#faq-existing-ui-integrations)*
-
+_See also: [FAQ: Which UI components are already integrated with this app?](#faq-existing-ui-integrations)_
 
 ## Installation
 
@@ -30,16 +29,6 @@ $ go get -u github.com/maximbaz/yubikey-touch-detector
 ```
 
 This places the binary in your `$GOPATH/bin` folder, as well as the sources in `$GOPATH/src` for you to use the detection functions in your own code.
-
-
-## Prerequisites
-
-<a name="prerequisites-pam-u2f"></a>
-
-#### If you use `pam-u2f`:
-
-- [maximbaz/pam-u2f](https://github.com/maximbaz/pam-u2f) - a patched version of `pam-u2f` that adds touch notifications. Patched version of the last official release v1.0.4 [is also available](https://github.com/maximbaz/pam-u2f/tree/pam_u2f-1.0.4-indicator).
-
 
 ## Usage
 
@@ -64,7 +53,7 @@ Next, in order to integrate the app with other UI components to display a visibl
 `unix_socket` notifier allows anyone to connect to the socket `$XDG_RUNTIME_DIR/yubikey-touch-detector.socket` and receive the following events:
 
 | event   | description                                        |
-|---------|----------------------------------------------------|
+| ------- | -------------------------------------------------- |
 | `GPG_1` | when a `gpg` operation started waiting for a touch |
 | `GPG_0` | when a `gpg` operation stopped waiting for a touch |
 | `U2F_1` | when `pam-u2f` started waiting for a touch         |
@@ -72,26 +61,25 @@ Next, in order to integrate the app with other UI components to display a visibl
 
 All messages have a fixed length of 5 bytes to simplify the code on the receiving side.
 
-
 ## How it works
 
 Your YubiKey may require a physical touch to confirm these operations:
 
-- `sudo` request (via `pam-u2f`)
-- `gpg --sign`
-- `gpg --decrypt`
-- `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
-- `ssh` on a remote host to a different remote host (via forwarded `ssh-agent`)
+* `sudo` request (via `pam-u2f`)
+* `gpg --sign`
+* `gpg --decrypt`
+* `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
+* `ssh` on a remote host to a different remote host (via forwarded `ssh-agent`)
 
-*See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)*
+_See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)_
 
 #### Detecting a sudo request (via `pam-u2f`)
 
-In order to detect when `pam-u2f` requests a touch on YubiKey, you first need to install [prerequisites for `pam-u2f`](#prerequisites-pam-u2f).
+In order to detect when `pam-u2f` requests a touch on YubiKey, make sure you use `pam-u2f` of at least `v1.0.7`.
 
-With that in place, `pam-u2f` will open `$HOME/.config/Yubico/u2f_keys` every time it starts and stops waiting for a touch.
+With that in place, `pam-u2f` will open `/var/run/$UID/pam-u2f-touch` when it starts waiting for a user to touch the device, and close it when it stops waiting for a touch.
 
-> If the path to your `u2f_keys` file differs, provide it via `--u2f-keys-path` CLI argument.
+> If the path to your lock file differs, provide it via `--u2f-lock-path` CLI argument.
 
 This app will thus watch for `OPEN` events on that file, and when event occurs will toggle the touch indicator.
 
@@ -108,7 +96,6 @@ In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey
 The requests performed on a local host will be captured by the `gpg` detector. However, in order to detect the use of forwarded `ssh-agent` on a remote host, an additional detector was introduced.
 
 This detector runs as a proxy on the `$SSH_AUTH_SOCK`, it listens to all communications with that socket and starts a `gpg --card-status` check in case an event was captured.
-
 
 ## FAQ
 
@@ -132,4 +119,4 @@ Make sure to unplug and plug back in your YubiKey after changing any of the opti
 
 #### Which UI components are already integrated with this app?
 
-- [py3status](https://github.com/ultrabug/py3status) provides an indicator for [i3wm](https://i3wm.org/) via a `yubikey` module.
+* [py3status](https://github.com/ultrabug/py3status) provides an indicator for [i3wm](https://i3wm.org/) via a `yubikey` module.

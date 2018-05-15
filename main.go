@@ -16,10 +16,10 @@ func main() {
 	defaultGpgPubringPath := "$GNUPGHOME/pubring.kbx or $HOME/.gnupg/pubring.kbx"
 
 	var verbose bool
-	var u2fLockPath string
+	var u2fAuthPendingPath string
 	var gpgPubringPath string
 	flag.BoolVar(&verbose, "v", false, "print verbose output")
-	flag.StringVar(&u2fLockPath, "u2f-lock-path", "/var/run/user/1000/pam-u2f-touch", "path to pam-u2f lock file")
+	flag.StringVar(&u2fAuthPendingPath, "u2f-authpending-path", "/var/run/user/1000/pam-u2f-authpending", "path to pam-u2f-authpending file")
 	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", defaultGpgPubringPath, "path to gpg's pubring.kbx file")
 	flag.Parse()
 
@@ -36,7 +36,7 @@ func main() {
 		}
 	}
 
-	u2fLockPath = os.ExpandEnv(u2fLockPath)
+	u2fAuthPendingPath = os.ExpandEnv(u2fAuthPendingPath)
 	gpgPubringPath = os.ExpandEnv(gpgPubringPath)
 
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
@@ -52,7 +52,7 @@ func main() {
 	requestGPGCheck := make(chan bool)
 	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
 
-	go detector.WatchU2F(u2fLockPath, notifiers)
+	go detector.WatchU2F(u2fAuthPendingPath, notifiers)
 	go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
 	go detector.WatchSSH(requestGPGCheck, exits)
 

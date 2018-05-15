@@ -77,9 +77,9 @@ _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#fa
 
 In order to detect when `pam-u2f` requests a touch on YubiKey, make sure you use `pam-u2f` of at least `v1.0.7`.
 
-With that in place, `pam-u2f` will open `/var/run/$UID/pam-u2f-touch` when it starts waiting for a user to touch the device, and close it when it stops waiting for a touch.
+With that in place, `pam-u2f` will open `/var/run/$UID/pam-u2f-authpending` when it starts waiting for a user to touch the device, and close it when it stops waiting for a touch.
 
-> If the path to your lock file differs, provide it via `--u2f-lock-path` CLI argument.
+> If the path to your authpending file differs, provide it via `--u2f-auth-pending-path` CLI argument.
 
 This app will thus watch for `OPEN` events on that file, and when event occurs will toggle the touch indicator.
 

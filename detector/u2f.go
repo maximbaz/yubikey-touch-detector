@@ -10,19 +10,19 @@ import (
 )
 
 // WatchU2F watches when YubiKey is waiting for a touch on a U2F request
-func WatchU2F(u2fLockPath string, notifiers map[string]chan notifier.Message) {
+func WatchU2F(u2fAuthPendingPath string, notifiers map[string]chan notifier.Message) {
 	// It's important to not miss a single event, so have a small buffer
 	events := make(chan notify.EventInfo, 10)
 	openCounter := 0
 
 	initWatcher := func() {
 		// Ensure the file exists (pam-u2f doesn't create it beforehand)
-		os.Create(u2fLockPath)
+		os.Create(u2fAuthPendingPath)
 
 		// Setup the watcher
 		openCounter = 0
-		if err := notify.Watch(u2fLockPath, events, notify.InOpen, notify.InCloseWrite, notify.InCloseNowrite, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
-			log.Errorf("Cannot establish a watch on u2f lock file '%v': %v", u2fLockPath, err)
+		if err := notify.Watch(u2fAuthPendingPath, events, notify.InOpen, notify.InCloseWrite, notify.InCloseNowrite, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
+			log.Errorf("Cannot establish a watch on pam-u2f-authpending file '%v': %v", u2fAuthPendingPath, err)
 			return
 		}
 		log.Debug("U2F watcher is successfully established")

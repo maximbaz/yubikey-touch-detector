@@ -4,7 +4,7 @@ This is a tool that can detect when YubiKey is waiting for your touch. It is des
 
 For example, an integration with [i3wm](https://i3wm.org/) and [py3status](https://github.com/ultrabug/py3status) looks like this:
 
-![demo](./demo.gif)
+![demo](https://user-images.githubusercontent.com/1177900/46533233-2bcf5580-c8a4-11e8-99e7-1418e89615f5.gif)
 
 _See also: [FAQ: Which UI components are already integrated with this app?](#faq-existing-ui-integrations)_
 
@@ -65,11 +65,11 @@ All messages have a fixed length of 5 bytes to simplify the code on the receivin
 
 Your YubiKey may require a physical touch to confirm these operations:
 
-* `sudo` request (via `pam-u2f`)
-* `gpg --sign`
-* `gpg --decrypt`
-* `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
-* `ssh` on a remote host to a different remote host (via forwarded `ssh-agent`)
+- `sudo` request (via `pam-u2f`)
+- `gpg --sign`
+- `gpg --decrypt`
+- `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
+- `ssh` on a remote host to a different remote host (via forwarded `ssh-agent`)
 
 _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)_
 
@@ -119,4 +119,5 @@ Make sure to unplug and plug back in your YubiKey after changing any of the opti
 
 #### Which UI components are already integrated with this app?
 
-* [py3status](https://github.com/ultrabug/py3status) provides an indicator for [i3wm](https://i3wm.org/) via a `yubikey` module.
+- [py3status](https://github.com/ultrabug/py3status) provides an indicator for [i3wm](https://i3wm.org/) via [yubikey](https://github.com/ultrabug/py3status/blob/master/py3status/modules/yubikey.py) module.
+- [barista](https://github.com/soumya92/barista) provides an indicator for [i3wm](https://i3wm.org/) via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.

@@ -10,7 +10,7 @@ _See also: [FAQ: Which UI components are already integrated with this app?](#faq
 
 ## Installation
 
-The app is available as an AUR package: [yubikey-touch-detector](https://aur.archlinux.org/packages/yubikey-touch-detector)
+On Arch Linux, you can install it with `pacman -S yubikey-touch-detector`
 
 The package also installs a systemd service, make sure to start and enable it:
 

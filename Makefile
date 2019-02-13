@@ -7,7 +7,7 @@ GO_LDFLAGS := "-extldflags ${LDFLAGS}"
 all: deps build
 
 deps:
-	dep ensure
+	dep ensure -vendor-only
 
 build: main.go detector/ notifier/
 	go build -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(APP_NAME) main.go

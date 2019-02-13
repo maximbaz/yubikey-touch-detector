@@ -1,12 +1,16 @@
 APP_NAME := yubikey-touch-detector
 
+GO_GCFLAGS := "all=-trimpath=${PWD}"
+GO_ASMFLAGS := "all=-trimpath=${PWD}"
+GO_LDFLAGS := "-extldflags ${LDFLAGS}"
+
 all: deps build
 
 deps:
 	dep ensure
 
 build: main.go detector/ notifier/
-	go build -o $(APP_NAME) main.go
+	go build -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(APP_NAME) main.go
 
 clean:
 	rm -f $(APP_NAME)

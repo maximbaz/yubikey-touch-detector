@@ -1,0 +1,8 @@
+[Unit]
+Description=Detects when your YubiKey is waiting for a touch
+
+[Socket]
+ListenStream=%t/yubikey-touch-detector.socket
+
+[Install]
+WantedBy=sockets.target

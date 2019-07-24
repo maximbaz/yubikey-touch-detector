@@ -16,9 +16,11 @@ func main() {
 	defaultGpgPubringPath := "$GNUPGHOME/pubring.kbx or $HOME/.gnupg/pubring.kbx"
 
 	var verbose bool
+	var libnotify bool
 	var u2fAuthPendingPath string
 	var gpgPubringPath string
 	flag.BoolVar(&verbose, "v", false, "print verbose output")
+	flag.BoolVar(&libnotify, "libnotify", false, "use libnotify for notifications")
 	flag.StringVar(&u2fAuthPendingPath, "u2f-authpending-path", "/var/run/user/1000/pam-u2f-authpending", "path to pam-u2f-authpending file")
 	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", defaultGpgPubringPath, "path to gpg's pubring.kbx file")
 	flag.Parse()
@@ -48,6 +50,9 @@ func main() {
 	notifiers := make(map[string]chan notifier.Message)
 	go notifier.SetupStdErrNotifier(notifiers)
 	go notifier.SetupUnixSocketNotifier(notifiers, exits)
+	if libnotify {
+		go notifier.SetupLibnotifyNotifier(notifiers)
+	}
 
 	requestGPGCheck := make(chan bool)
 	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)

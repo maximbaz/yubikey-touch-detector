@@ -16,7 +16,8 @@ func SetupLibnotifyNotifier(notifiers map[string]chan Message) {
 	notifiers["notifier/libnotify"] = touch
 
 	for {
-		if <-touch == GPG_ON {
+		value := <-touch
+		if value == GPG_ON || value == U2F_ON {
 			err := notifySend("Yubikey is waiting for a touch")
 			if err != nil {
 				log.Error("Cannot send desktop notification: ", err)

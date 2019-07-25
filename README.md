@@ -42,9 +42,17 @@ $ yubikey-touch-detector -v
 
 Now try different commands that require a physical touch and see if the app can successfully detect them.
 
+#### Desktop notifications
+
+You can make the app show desktop notifications using `libnotify` if you run it with corresponding flag:
+
+```
+$ yubikey-touch-detector --libnotify
+```
+
 #### Integrating with other UI components
 
-First of all, make sure the app is running (e.g. wrap it in a systemd user service).
+First of all, make sure the app is always running (e.g. start a provided systemd user service).
 
 Next, in order to integrate the app with other UI components to display a visible indicator, use any of the available notifiers in the `notifier` subpackage.
 

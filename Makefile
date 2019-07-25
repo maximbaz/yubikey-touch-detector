@@ -1,34 +1,41 @@
-APP_NAME := yubikey-touch-detector
+BIN := yubikey-touch-detector
+VERSION = 1.3.0
+
+PREFIX ?= /usr
+LIB_DIR = $(DESTDIR)$(PREFIX)/lib
+BIN_DIR = $(DESTDIR)$(PREFIX)/bin
+SHARE_DIR = $(DESTDIR)$(PREFIX)/share
 
 GO_GCFLAGS := "all=-trimpath=${PWD}"
 GO_ASMFLAGS := "all=-trimpath=${PWD}"
 GO_LDFLAGS := "-extldflags ${LDFLAGS}"
 
-all: deps build
-
-deps:
-	dep ensure -vendor-only
-
+.PHONY: build
 build: main.go detector/ notifier/
-	go build -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(APP_NAME) main.go
+	go build -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(BIN) main.go
 
+.PHONY: clean
 clean:
-	rm -f $(APP_NAME)
-	rm -rf release
+	rm -f "$(BIN)"
+	rm -rf dist
 
-tarball: clean deps
-	rm -rf /tmp/$(APP_NAME) /tmp/$(APP_NAME)-src.tar.gz
-	cp -r ../$(APP_NAME) /tmp/$(APP_NAME)
-	rm -rf /tmp/$(APP_NAME)/.git /tmp/$(APP_NAME)/tags
-	(cd /tmp && tar -czf /tmp/$(APP_NAME)-src.tar.gz $(APP_NAME))
-	mkdir -p release
-	cp /tmp/$(APP_NAME)-src.tar.gz release/
+.PHONY: dist
+dist: clean build
+	mkdir -p dist
 
-release: tarball deps build
-	mkdir -p release
-	tar -czf release/$(APP_NAME).tar.gz $(APP_NAME) $(APP_NAME).service
+	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
 
-sign: release
-	for file in release/*; do \
-		gpg --detach-sign "$$file"; \
+	tar -cvzf "dist/$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)" "$(BIN).service" LICENSE README.md
+
+	for file in dist/*; do \
+	    gpg --detach-sign --armor "$$file"; \
 	done
+
+	rm -f "dist/$(BIN)-$(VERSION).tar.gz"
+
+.PHONY: install
+install:
+	install -Dm755 -t "$(BIN_DIR)/" $(BIN)
+	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).service"
+	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE
+	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" README.md

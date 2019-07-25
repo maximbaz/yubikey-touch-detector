@@ -52,7 +52,7 @@ func main() {
 	gpgPubringPath = os.ExpandEnv(gpgPubringPath)
 
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.Debug("Starting Yubikey touch detector")
+	log.Debug("Starting YubiKey touch detector")
 
 	exits := make(map[string]chan bool)
 	go setupExitSignalWatch(exits)
@@ -87,6 +87,6 @@ func setupExitSignalWatch(exits map[string]chan bool) {
 		<-exit       // Wait for confirmation
 	}
 
-	log.Debug("Stopping Yubikey touch detector")
+	log.Debug("Stopping YubiKey touch detector")
 	os.Exit(0)
 }

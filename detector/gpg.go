@@ -45,7 +45,7 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 	}
 }
 
-// CheckGPGOnRequest checks whether Yubikey is actually waiting for a touch on a GPG request
+// CheckGPGOnRequest checks whether YubiKey is actually waiting for a touch on a GPG request
 func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers map[string]chan notifier.Message) {
 	for {
 		<-requestGPGCheck

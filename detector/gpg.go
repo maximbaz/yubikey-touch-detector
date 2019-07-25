@@ -52,7 +52,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers map[string]chan noti
 
 		for i := 0; i < 20; i++ {
 			cmd := checkGPGCardStatus()
-			timer := time.AfterFunc(100*time.Millisecond, func() {
+			timer := time.AfterFunc(1000*time.Millisecond, func() {
 				cmd.Process.Kill()
 			})
 			err := cmd.Wait()

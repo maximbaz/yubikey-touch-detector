@@ -2,7 +2,8 @@
 Description=Detects when your YubiKey is waiting for a touch
 
 [Service]
-ExecStart=/usr/bin/yubikey-touch-detector
+Environment="ARGS=%I"
+ExecStart=/usr/bin/yubikey-touch-detector $ARGS
 
 [Install]
 WantedBy=default.target

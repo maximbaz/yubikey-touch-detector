@@ -16,9 +16,11 @@ The package also installs a systemd service, make sure to start and enable it:
 
 ```
 $ systemctl --user daemon-reload
-$ systemctl --user start yubikey-touch-detector.service
-$ systemctl --user enable yubikey-touch-detector.service
+$ systemctl --user start yubikey-touch-detector@.service
+$ systemctl --user enable yubikey-touch-detector@.service
 ```
+
+If you want the service to use libnotify you can replace the service above with `yubikey-touch-detector@-libnotify.service`.
 
 Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).
 

@@ -10,27 +10,44 @@ GO_GCFLAGS := "all=-trimpath=${PWD}"
 GO_ASMFLAGS := "all=-trimpath=${PWD}"
 GO_LDFLAGS := "-extldflags ${LDFLAGS}"
 
+.PHONY: local
+local: vendor build
+
 .PHONY: build
 build: main.go detector/ notifier/
-	go build -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(BIN) main.go
+	go build -mod vendor -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(BIN) main.go
+
+.PHONY: vendor
+vendor:
+	go mod tidy
+	go mod vendor
 
 .PHONY: clean
 clean:
 	rm -f "$(BIN)"
 	rm -rf dist
+	rm -rf vendor
 
 .PHONY: dist
-dist: clean build
+dist: clean vendor build
+	$(eval TMP := $(shell mktemp -d))
+	mkdir "$(TMP)/$(BIN)-$(VERSION)"
+	cp -r * "$(TMP)/$(BIN)-$(VERSION)"
+	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
+
+	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	cp "$(BIN)" "$(BIN).service" LICENSE README.md "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
+
 	mkdir -p dist
-
+	mv "$(TMP)/$(BIN)-$(VERSION)"-*.tar.gz dist
 	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
-
-	tar -cvzf "dist/$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)" "$(BIN).service" LICENSE README.md
 
 	for file in dist/*; do \
 	    gpg --detach-sign --armor "$$file"; \
 	done
 
+	rm -rf "$(TMP)"
 	rm -f "dist/$(BIN)-$(VERSION).tar.gz"
 
 .PHONY: install

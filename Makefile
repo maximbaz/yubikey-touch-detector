@@ -1,5 +1,5 @@
 BIN := yubikey-touch-detector
-VERSION = 1.3.0
+VERSION = 1.4.0
 
 PREFIX ?= /usr
 LIB_DIR = $(DESTDIR)$(PREFIX)/lib

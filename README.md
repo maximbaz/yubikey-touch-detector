@@ -10,14 +10,15 @@ _See also: [FAQ: Which UI components are already integrated with this app?](#faq
 
 ## Installation
 
+**This tool only works on Linux**. If you want to help implementing (at least partial) support for other OS, pull requests are very welcome!
+
 On Arch Linux, you can install it with `pacman -S yubikey-touch-detector`
 
 The package also installs a systemd service, make sure to start and enable it:
 
 ```
 $ systemctl --user daemon-reload
-$ systemctl --user start yubikey-touch-detector.service
-$ systemctl --user enable yubikey-touch-detector.service
+$ systemctl --user enable --now yubikey-touch-detector.service
 ```
 
 Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).

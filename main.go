@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/maximbaz/yubikey-touch-detector/detector"
@@ -16,19 +17,35 @@ import (
 const appVersion = "1.3.0"
 
 func main() {
+	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}
+	defaultU2fAuthPendingPath := "/var/run/user/1000/pam-u2f-authpending"
 	defaultGpgPubringPath := "$GNUPGHOME/pubring.kbx or $HOME/.gnupg/pubring.kbx"
+
+	envVerbose := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_VERBOSE"))]
+	envLibnotify := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY"))]
+	envU2fAuthPendingPath := os.Getenv("YUBIKEY_TOUCH_DETECTOR_U2F_AUTHPENDING_PATH")
+	envGpgPubringPath := os.Getenv("YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH")
 
 	var version bool
 	var verbose bool
 	var libnotify bool
 	var u2fAuthPendingPath string
 	var gpgPubringPath string
-	flag.BoolVar(&verbose, "v", false, "print verbose output")
+
 	flag.BoolVar(&version, "version", false, "print version and exit")
-	flag.BoolVar(&libnotify, "libnotify", false, "show desktop notifications using libnotify")
-	flag.StringVar(&u2fAuthPendingPath, "u2f-authpending-path", "/var/run/user/1000/pam-u2f-authpending", "path to pam-u2f-authpending file")
-	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", defaultGpgPubringPath, "path to gpg's pubring.kbx file")
+	flag.BoolVar(&verbose, "v", envVerbose, "print verbose output")
+	flag.BoolVar(&libnotify, "libnotify", envLibnotify, "show desktop notifications using libnotify")
+	flag.StringVar(&u2fAuthPendingPath, "u2f-authpending-path", envU2fAuthPendingPath, "path to pam-u2f-authpending file")
+	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", envGpgPubringPath, "path to gpg's pubring.kbx file")
 	flag.Parse()
+
+	if u2fAuthPendingPath == "" {
+		u2fAuthPendingPath = defaultU2fAuthPendingPath
+	}
+
+	if gpgPubringPath == "" {
+		gpgPubringPath = defaultGpgPubringPath
+	}
 
 	if version {
 		fmt.Println("YubiKey touch detector version:", appVersion)

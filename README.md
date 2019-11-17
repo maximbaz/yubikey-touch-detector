@@ -51,6 +51,19 @@ You can make the app show desktop notifications using `libnotify` if you run it 
 $ yubikey-touch-detector --libnotify
 ```
 
+#### Configuring the app
+
+The app supports the following environment variables and CLI arguments (CLI args take precedence):
+
+| Environment var                               | CLI arg                  |
+| --------------------------------------------- | ------------------------ |
+| `YUBIKEY_TOUCH_DETECTOR_VERBOSE`              | `-v`                     |
+| `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY`            | `--libnotify`            |
+| `YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH`     | `--gpg-pubring-path`     |
+| `YUBIKEY_TOUCH_DETECTOR_U2F_AUTHPENDING_PATH` | `--u2f-authpending-path` |
+
+You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`
+
 #### Integrating with other UI components
 
 First of all, make sure the app is always running (e.g. start a provided systemd user service).

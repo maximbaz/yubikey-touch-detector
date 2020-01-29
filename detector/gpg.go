@@ -75,7 +75,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers map[string]chan noti
 }
 
 func checkGPGCardStatus() *exec.Cmd {
-	cmd := exec.Command("gpg", "--no-tty", "--card-status")
+	cmd := exec.Command("gpg", "--card-status")
 	if err := cmd.Start(); err != nil {
 		log.Error(err)
 	}

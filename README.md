@@ -141,5 +141,6 @@ Make sure to unplug and plug back in your YubiKey after changing any of the opti
 
 #### Which UI components are already integrated with this app?
 
-- [py3status](https://github.com/ultrabug/py3status) provides an indicator for [i3wm](https://i3wm.org/) via [yubikey](https://github.com/ultrabug/py3status/blob/master/py3status/modules/yubikey.py) module.
-- [barista](https://github.com/soumya92/barista) provides an indicator for [i3wm](https://i3wm.org/) via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.
+- [waybar](https://github.com/Alexays/Waybar) can display an indicator via custom [yubikey](https://github.com/maximbaz/dotfiles/blob/master/bin/waybar-yubikey) module.
+- [py3status](https://github.com/ultrabug/py3status) can display an indicator via [yubikey](https://github.com/ultrabug/py3status/blob/master/py3status/modules/yubikey.py) module.
+- [barista](https://github.com/soumya92/barista) can display an indicator via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.

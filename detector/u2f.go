@@ -1,7 +1,10 @@
 package detector
 
 import (
-	"os"
+	"fmt"
+	"io/ioutil"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
@@ -10,61 +13,71 @@ import (
 )
 
 // WatchU2F watches when YubiKey is waiting for a touch on a U2F request
-func WatchU2F(u2fAuthPendingPath string, notifiers map[string]chan notifier.Message) {
-	// It's important to not miss a single event, so have a small buffer
-	events := make(chan notify.EventInfo, 10)
-	openCounter := 0
-
-	initWatcher := func() {
-		// Ensure the file exists (pam-u2f doesn't create it beforehand)
-		os.Create(u2fAuthPendingPath)
-
-		// Setup the watcher
-		openCounter = 0
-		if err := notify.Watch(u2fAuthPendingPath, events, notify.InOpen, notify.InCloseWrite, notify.InCloseNowrite, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
-			log.Errorf("Cannot establish a watch on pam-u2f-authpending file '%v': %v", u2fAuthPendingPath, err)
-			return
+func WatchU2F(notifiers map[string]chan notifier.Message) {
+	initWatcher := func(path string, eventTypes ...notify.Event) chan notify.EventInfo {
+		events := make(chan notify.EventInfo, 10)
+		if err := notify.Watch(path, events, eventTypes...); err != nil {
+			log.Errorf("Cannot establish a watch on folder '%v': %v", path, err)
+			return nil
 		}
-		log.Debug("U2F watcher is successfully established")
+		log.Debugf("U2F watcher on '%v' is successfully established", path)
+		return events
 	}
 
-	initWatcher()
-	defer notify.Stop(events)
-
-	for {
-		select {
-		case event := <-events:
-			switch event.Event() {
-			case notify.InOpen:
-				openCounter++
-				if openCounter == 1 {
+	runWatcher := func(events chan notify.EventInfo) {
+		for {
+			select {
+			case event := <-events:
+				switch event.Event() {
+				case notify.InOpen:
 					for _, n := range notifiers {
 						n <- notifier.U2F_ON
 					}
-				}
-			case notify.InCloseWrite:
-			case notify.InCloseNowrite:
-				if openCounter == 0 {
-					log.Debugf("u2f received an unmatched close event, ignoring it.")
-					break
-				}
-				openCounter--
-				if openCounter == 0 {
+
+				case notify.InCloseNowrite:
+				case notify.InCloseWrite:
 					for _, n := range notifiers {
 						n <- notifier.U2F_OFF
 					}
+
+				default:
+					// Device got removed, unsubscribe and exit
+					notify.Stop(events)
+					return
 				}
-			default:
-				log.Debugf("u2f received file event '%+v', recreating the watcher.", event.Event())
-				notify.Stop(events)
-				if openCounter > 0 {
-					for _, n := range notifiers {
-						n <- notifier.U2F_OFF
-					}
-				}
-				time.Sleep(5 * time.Second)
-				initWatcher()
 			}
+		}
+	}
+
+	checkAndInitWatcher := func(devicePath string) {
+		if strings.Contains(devicePath, "hidraw") {
+			// Give a second for device to initialize before establishing a watcher
+			time.Sleep(1 * time.Second)
+
+			if info, err := ioutil.ReadFile(fmt.Sprintf("/sys/class/hidraw/%v/device/uevent", path.Base(devicePath))); err == nil {
+				if strings.Contains(string(info), "YubiKey") {
+					watcher := initWatcher(devicePath, notify.InOpen, notify.InCloseNowrite, notify.InCloseWrite, notify.InDeleteSelf)
+					go runWatcher(watcher)
+				}
+			}
+		}
+	}
+
+	devicesEvents := initWatcher("/dev", notify.Create)
+	defer notify.Stop(devicesEvents)
+
+	if devices, err := ioutil.ReadDir("/dev"); err == nil {
+		for _, device := range devices {
+			checkAndInitWatcher(path.Join("/dev", device.Name()))
+		}
+	} else {
+		log.Errorf("Cannot list devices in '/dev' to find connected YubiKeys: %v", err)
+	}
+
+	for {
+		select {
+		case event := <-devicesEvents:
+			checkAndInitWatcher(event.Path())
 		}
 	}
 }

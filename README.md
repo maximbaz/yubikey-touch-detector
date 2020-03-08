@@ -55,12 +55,11 @@ $ yubikey-touch-detector --libnotify
 
 The app supports the following environment variables and CLI arguments (CLI args take precedence):
 
-| Environment var                               | CLI arg                  |
-| --------------------------------------------- | ------------------------ |
-| `YUBIKEY_TOUCH_DETECTOR_VERBOSE`              | `-v`                     |
-| `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY`            | `--libnotify`            |
-| `YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH`     | `--gpg-pubring-path`     |
-| `YUBIKEY_TOUCH_DETECTOR_U2F_AUTHPENDING_PATH` | `--u2f-authpending-path` |
+| Environment var                           | CLI arg              |
+| ----------------------------------------- | -------------------- |
+| `YUBIKEY_TOUCH_DETECTOR_VERBOSE`          | `-v`                 |
+| `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY`        | `--libnotify`        |
+| `YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH` | `--gpg-pubring-path` |
 
 You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`
 
@@ -78,8 +77,8 @@ Next, in order to integrate the app with other UI components to display a visibl
 | ------- | -------------------------------------------------- |
 | `GPG_1` | when a `gpg` operation started waiting for a touch |
 | `GPG_0` | when a `gpg` operation stopped waiting for a touch |
-| `U2F_1` | when `pam-u2f` started waiting for a touch         |
-| `U2F_0` | when `pam-u2f` stopped waiting for a touch         |
+| `U2F_1` | when a `u2f` operation started waiting for a touch |
+| `U2F_0` | when a `u2f` operation stopped waiting for a touch |
 
 All messages have a fixed length of 5 bytes to simplify the code on the receiving side.
 
@@ -88,6 +87,7 @@ All messages have a fixed length of 5 bytes to simplify the code on the receivin
 Your YubiKey may require a physical touch to confirm these operations:
 
 - `sudo` request (via `pam-u2f`)
+- [WebAuthn](https://webauthn.io/)
 - `gpg --sign`
 - `gpg --decrypt`
 - `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
@@ -95,15 +95,13 @@ Your YubiKey may require a physical touch to confirm these operations:
 
 _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)_
 
-#### Detecting a sudo request (via `pam-u2f`)
+#### Detecting u2f operations
 
-In order to detect when `pam-u2f` requests a touch on YubiKey, make sure you use `pam-u2f` of at least `v1.0.7`.
+In order to detect whether a U2F operation requests a touch on YubiKey, the app is watching `/dev/hidraw*` devices that are labeled as `YubiKey`.
 
-With that in place, `pam-u2f` will open `/var/run/$UID/pam-u2f-authpending` when it starts waiting for a user to touch the device, and close it when it stops waiting for a touch.
+It was noticed that one of those devices gets opened when YubiKey starts waiting for a user to touch the device, and closed when it stops waiting for a touch.
 
-> If the path to your authpending file differs, provide it via `--u2f-auth-pending-path` CLI argument.
-
-This app will thus watch for `OPEN` events on that file, and when event occurs will toggle the touch indicator.
+This app will thus watch for `OPEN` and `CLOSE` events on those files, and when event occurs will toggle the touch indicator.
 
 ### Detecting gpg operations
 
@@ -125,7 +123,7 @@ This detector runs as a proxy on the `$SSH_AUTH_SOCK`, it listens to all communi
 
 #### How do I configure my YubiKey to require a physical touch?
 
-For `sudo` requests with `pam-u2f`, please refer to the documentation on [Yubico/pam-u2f](https://github.com/Yubico/pam-u2f) and online guides.
+For `sudo` requests with `pam-u2f`, please refer to the documentation on [Yubico/pam-u2f](https://github.com/Yubico/pam-u2f) and online guides (e.g. [official one](https://support.yubico.com/support/solutions/articles/15000011356-ubuntu-linux-login-guide-u2f)).
 
 For `gpg` and `ssh` operations, install [ykman](https://github.com/Yubico/yubikey-manager) and use the following commands:
 

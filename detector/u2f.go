@@ -17,7 +17,7 @@ func WatchU2F(notifiers map[string]chan notifier.Message) {
 	initWatcher := func(path string, eventTypes ...notify.Event) chan notify.EventInfo {
 		events := make(chan notify.EventInfo, 10)
 		if err := notify.Watch(path, events, eventTypes...); err != nil {
-			log.Errorf("Cannot establish a watch on folder '%v': %v", path, err)
+			log.Errorf("Cannot establish a watch on '%v': %v", path, err)
 			return nil
 		}
 		log.Debugf("U2F watcher on '%v' is successfully established", path)

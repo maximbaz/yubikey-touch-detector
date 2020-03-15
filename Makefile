@@ -6,16 +6,15 @@ LIB_DIR = $(DESTDIR)$(PREFIX)/lib
 BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 SHARE_DIR = $(DESTDIR)$(PREFIX)/share
 
-GO_GCFLAGS := "all=-trimpath=${PWD}"
-GO_ASMFLAGS := "all=-trimpath=${PWD}"
-GO_LDFLAGS := "-extldflags ${LDFLAGS}"
+CGO_LDFLAGS := ${LDFLAGS}
+GOFLAGS := -buildmode=pie -trimpath -modcacherw
 
 .PHONY: local
 local: vendor build
 
 .PHONY: build
 build: main.go detector/ notifier/
-	go build -mod vendor -ldflags $(GO_LDFLAGS) -gcflags $(GO_GCFLAGS) -asmflags $(GO_ASMFLAGS) -o $(BIN) main.go
+	CGO_LDFLAGS="$(CGO_LDFLAGS)" GOFLAGS="$(GOFLAGS)" go build -o $(BIN) main.go
 
 .PHONY: vendor
 vendor:

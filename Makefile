@@ -6,15 +6,15 @@ LIB_DIR = $(DESTDIR)$(PREFIX)/lib
 BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 SHARE_DIR = $(DESTDIR)$(PREFIX)/share
 
-CGO_LDFLAGS := ${LDFLAGS}
-GOFLAGS := -buildmode=pie -trimpath -modcacherw
+export CGO_LDFLAGS := ${LDFLAGS}
+export GOFLAGS := -buildmode=pie -trimpath
 
 .PHONY: local
 local: vendor build
 
 .PHONY: build
 build: main.go detector/ notifier/
-	CGO_LDFLAGS="$(CGO_LDFLAGS)" GOFLAGS="$(GOFLAGS)" go build -o $(BIN) main.go
+	go build -o $(BIN) main.go
 
 .PHONY: vendor
 vendor:

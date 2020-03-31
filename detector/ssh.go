@@ -29,7 +29,10 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	originalSocketFile := socketFile + ".original"
 	if _, err := os.Stat(originalSocketFile); err == nil {
 		log.Warnf("'%v' already exists, assuming it's the correct one and trying to recover", originalSocketFile)
-		os.Remove(socketFile)
+		if err = os.Remove(socketFile); err != nil {
+			log.Errorf("Cannot remove '%v' in order to recover from possible previous crash", socketFile)
+			return
+		}
 	} else {
 		if err := os.Rename(socketFile, originalSocketFile); err != nil {
 			log.Error("Cannot move original SSH socket file to setup a proxy: ", err)

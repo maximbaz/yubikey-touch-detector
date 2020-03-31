@@ -26,7 +26,10 @@ func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string
 	socketFile := path.Join(socketDir, "yubikey-touch-detector.socket")
 	if _, err := os.Stat(socketFile); err == nil {
 		log.Warnf("'%v' already exists, assuming it's an obsolete one and trying to recover", socketFile)
-		os.Remove(socketFile)
+		if err = os.Remove(socketFile); err != nil {
+			log.Errorf("Cannot remove '%v' in order to recover from possible previous crash", socketFile)
+			return
+		}
 	}
 
 	socket, err := net.Listen("unix", socketFile)

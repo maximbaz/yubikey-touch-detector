@@ -28,13 +28,13 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 
 	originalSocketFile := socketFile + ".original"
 	if _, err := os.Stat(originalSocketFile); err == nil {
-		log.Errorf("Cannot watch SSH, '%v' already exists", originalSocketFile)
-		return
-	}
-
-	if err := os.Rename(socketFile, originalSocketFile); err != nil {
-		log.Error("Cannot move original SSH socket file to setup a proxy: ", err)
-		return
+		log.Warnf("'%v' already exists, assuming it's the correct one and trying to recover", originalSocketFile)
+		os.Remove(socketFile)
+	} else {
+		if err := os.Rename(socketFile, originalSocketFile); err != nil {
+			log.Error("Cannot move original SSH socket file to setup a proxy: ", err)
+			return
+		}
 	}
 
 	proxySocket, err := net.Listen("unix", socketFile)

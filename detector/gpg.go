@@ -94,6 +94,7 @@ func cleanupGPGTempFiles(gpgPubringPath string) {
 	files, err := filepath.Glob(filepath.Join(gpgDir, ".#lk*"))
 	if err != nil {
 		log.Warnf("Unable to construct a glob to cleanup gpg temp files: %v", err)
+		return
 	}
 
 	for _, f := range files {

@@ -55,7 +55,7 @@ func WatchU2F(notifiers map[string]chan notifier.Message) {
 			time.Sleep(1 * time.Second)
 
 			if info, err := ioutil.ReadFile(fmt.Sprintf("/sys/class/hidraw/%v/device/uevent", path.Base(devicePath))); err == nil {
-				if strings.Contains(string(info), "YubiKey") {
+				if strings.Contains(strings.ToLower(string(info)), "yubikey") {
 					watcher := initWatcher(devicePath, notify.InOpen, notify.InCloseNowrite, notify.InCloseWrite, notify.InDeleteSelf)
 					go runWatcher(watcher)
 				}

@@ -77,6 +77,7 @@ func main() {
 	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, gpgPubringPath)
 
 	go detector.WatchU2F(notifiers)
+	go detector.WatchHMAC(notifiers)
 	go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
 	go detector.WatchSSH(requestGPGCheck, exits)
 

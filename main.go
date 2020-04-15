@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const appVersion = "1.5.2"
+const appVersion = "1.6.0"
 
 func main() {
 	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}

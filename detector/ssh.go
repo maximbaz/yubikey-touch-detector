@@ -5,12 +5,13 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // WatchSSH watches for hints that YubiKey is maybe waiting for a touch on a SSH auth request
-func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
+func WatchSSH(requestGPGCheck chan bool, exits *sync.Map) {
 	socketFile := os.Getenv("SSH_AUTH_SOCK")
 	if socketFile == "" {
 		runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
@@ -51,7 +52,7 @@ func WatchSSH(requestGPGCheck chan bool, exits map[string]chan bool) {
 	log.Debug("SSH watcher is successfully established")
 
 	exit := make(chan bool)
-	exits["detector/ssh"] = exit
+	exits.Store("detector/ssh", exit)
 	go func() {
 		<-exit
 		if err := proxySocket.Close(); err != nil {

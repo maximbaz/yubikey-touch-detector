@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/maximbaz/yubikey-touch-detector/detector"
@@ -62,10 +63,10 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.Debug("Starting YubiKey touch detector")
 
-	exits := make(map[string]chan bool)
+	exits := &sync.Map{}
 	go setupExitSignalWatch(exits)
 
-	notifiers := make(map[string]chan notifier.Message)
+	notifiers := &sync.Map{}
 	go notifier.SetupStdErrNotifier(notifiers)
 	go notifier.SetupUnixSocketNotifier(notifiers, exits)
 	if libnotify {
@@ -83,17 +84,19 @@ func main() {
 	<-wait
 }
 
-func setupExitSignalWatch(exits map[string]chan bool) {
+func setupExitSignalWatch(exits *sync.Map) {
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, os.Interrupt, syscall.SIGTERM)
 
 	<-exitSignal
 	println()
 
-	for _, exit := range exits {
+	exits.Range(func(k, v interface{}) bool {
+		exit := v.(chan bool)
 		exit <- true // Notify exit watcher
 		<-exit       // Wait for confirmation
-	}
+		return true
+	})
 
 	log.Debug("Stopping YubiKey touch detector")
 	os.Exit(0)

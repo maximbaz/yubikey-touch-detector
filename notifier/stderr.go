@@ -1,11 +1,15 @@
 package notifier
 
-import log "github.com/sirupsen/logrus"
+import (
+	"sync"
 
-// SetupStdErrNotifier configures a notifier to print all touch requests to STDOUT
-func SetupStdErrNotifier(notifiers map[string]chan Message) {
+	log "github.com/sirupsen/logrus"
+)
+
+// SetupStdErrNotifier configures a notifier to print all touch requests to STDERR
+func SetupStdErrNotifier(notifiers *sync.Map) {
 	touch := make(chan Message, 10)
-	notifiers["notifier/stdout"] = touch
+	notifiers.Store("notifier/stdout", touch)
 
 	for {
 		value := <-touch

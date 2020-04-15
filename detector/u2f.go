@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
@@ -13,7 +14,7 @@ import (
 )
 
 // WatchU2F watches when YubiKey is waiting for a touch on a U2F request
-func WatchU2F(notifiers map[string]chan notifier.Message) {
+func WatchU2F(notifiers *sync.Map) {
 	initWatcher := func(path string, eventTypes ...notify.Event) chan notify.EventInfo {
 		events := make(chan notify.EventInfo, 10)
 		if err := notify.Watch(path, events, eventTypes...); err != nil {
@@ -30,15 +31,17 @@ func WatchU2F(notifiers map[string]chan notifier.Message) {
 			case event := <-events:
 				switch event.Event() {
 				case notify.InOpen:
-					for _, n := range notifiers {
-						n <- notifier.U2F_ON
-					}
+					notifiers.Range(func(k, v interface{}) bool {
+						v.(chan notifier.Message) <- notifier.U2F_ON
+						return true
+					})
 
 				case notify.InCloseNowrite:
 				case notify.InCloseWrite:
-					for _, n := range notifiers {
-						n <- notifier.U2F_OFF
-					}
+					notifiers.Range(func(k, v interface{}) bool {
+						v.(chan notifier.Message) <- notifier.U2F_OFF
+						return true
+					})
 
 				default:
 					// Device got removed, unsubscribe and exit

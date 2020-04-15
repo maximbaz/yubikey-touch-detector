@@ -11,7 +11,7 @@ import (
 )
 
 // SetupUnixSocketNotifier configures a unix socket to transmit touch requests to other apps
-func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string]chan bool) {
+func SetupUnixSocketNotifier(notifiers *sync.Map, exits *sync.Map) {
 	socketDir := os.Getenv("XDG_RUNTIME_DIR")
 	if socketDir == "" {
 		log.Error("Cannot setup unix socket notifier, $XDG_RUNTIME_DIR is not defined.")
@@ -39,7 +39,7 @@ func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string
 	}
 
 	exit := make(chan bool)
-	exits["notifier/unix_socket"] = exit
+	exits.Store("notifier/unix_socket", exit)
 	go func() {
 		<-exit
 		if err := socket.Close(); err != nil {
@@ -49,7 +49,7 @@ func SetupUnixSocketNotifier(notifiers map[string]chan Message, exits map[string
 	}()
 
 	touch := make(chan Message, 10)
-	notifiers["notifier/unix_socket"] = touch
+	notifiers.Store("notifier/unix_socket", touch)
 
 	touchListeners := make(map[*net.Conn]chan []byte)
 	touchListenersMutex := sync.RWMutex{}

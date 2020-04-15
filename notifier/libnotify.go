@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"os/exec"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -11,9 +12,9 @@ func notifySend(text string) error {
 }
 
 // SetupLibnotifyNotifier configures a notifier to show all touch requests with libnotify
-func SetupLibnotifyNotifier(notifiers map[string]chan Message) {
+func SetupLibnotifyNotifier(notifiers *sync.Map) {
 	touch := make(chan Message, 10)
-	notifiers["notifier/libnotify"] = touch
+	notifiers.Store("notifier/libnotify", touch)
 
 	for {
 		value := <-touch

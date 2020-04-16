@@ -18,7 +18,7 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 
 	for {
 		value := <-touch
-		if value == GPG_ON || value == U2F_ON {
+		if value == GPG_ON || value == U2F_ON || value == HMAC_ON {
 			err := notifySend("YubiKey is waiting for a touch")
 			if err != nil {
 				log.Error("Cannot send desktop notification: ", err)

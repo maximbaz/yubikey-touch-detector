@@ -107,25 +107,32 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 	defer device.Close()
 
 	payload := make([]byte, 64)
+	lastMessage := notifier.U2F_OFF
 	for {
 		_, err = device.Read(payload)
 		if err != nil {
+			notifiers.Range(func(k, v interface{}) bool {
+				v.(chan notifier.Message) <- notifier.U2F_OFF
+				return true
+			})
 			return
 		}
 
 		isU2F := payload[4] == 0x83 && payload[7] == 0x69 && payload[8] == 0x85
 		isFIDO2 := payload[4] == 0xbb && payload[7] == 0x02
 
+		newMessage := notifier.U2F_OFF
 		if isU2F || isFIDO2 {
+			newMessage = notifier.U2F_ON
+		}
+
+		if newMessage != lastMessage {
 			notifiers.Range(func(k, v interface{}) bool {
-				v.(chan notifier.Message) <- notifier.U2F_ON
-				return true
-			})
-		} else {
-			notifiers.Range(func(k, v interface{}) bool {
-				v.(chan notifier.Message) <- notifier.U2F_OFF
+				v.(chan notifier.Message) <- newMessage
 				return true
 			})
 		}
+
+		lastMessage = newMessage
 	}
 }

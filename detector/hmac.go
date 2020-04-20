@@ -31,36 +31,54 @@ func WatchHMAC(notifiers *sync.Map) {
 		log.Errorf("Cannot list devices in '/dev' to find connected YubiKeys: %v", err)
 	}
 
+	lastMessage := notifier.HMAC_OFF
+	var onRemoveTimer *time.Timer
 	for {
 		select {
 		case event := <-devicesEvents:
 			switch event.Event() {
 			case notify.Create:
+				if onRemoveTimer != nil {
+					onRemoveTimer.Stop()
+				}
 				// Give a second for device to initialize
 				time.Sleep(1 * time.Second)
 
 				if isYubikeyHidrawDevice(event.Path()) {
 					yubikeyHidrawDevices.Add(event.Path())
-					notifiers.Range(func(k, v interface{}) bool {
-						v.(chan notifier.Message) <- notifier.HMAC_OFF
-						return true
-					})
-				}
-			case notify.Remove:
-				if yubikeyHidrawDevices.Has(event.Path()) {
-					yubikeyHidrawDevices.Remove(event.Path())
 
-					if yubikeyHidrawDevices.Size() > 0 {
+					newMessage := notifier.HMAC_OFF
+					if lastMessage != newMessage {
 						notifiers.Range(func(k, v interface{}) bool {
-							v.(chan notifier.Message) <- notifier.HMAC_ON
-							return true
-						})
-					} else {
-						notifiers.Range(func(k, v interface{}) bool {
-							v.(chan notifier.Message) <- notifier.HMAC_OFF
+							v.(chan notifier.Message) <- newMessage
 							return true
 						})
 					}
+					lastMessage = newMessage
+				}
+			case notify.Remove:
+				if yubikeyHidrawDevices.Has(event.Path()) {
+					if onRemoveTimer != nil {
+						onRemoveTimer.Stop()
+					}
+
+					yubikeyHidrawDevices.Remove(event.Path())
+
+					onRemoveTimer = time.AfterFunc(1*time.Second, func() {
+						newMessage := notifier.HMAC_OFF
+						if yubikeyHidrawDevices.Size() > 0 {
+							newMessage = notifier.HMAC_ON
+						}
+
+						if lastMessage != newMessage {
+							notifiers.Range(func(k, v interface{}) bool {
+								v.(chan notifier.Message) <- newMessage
+								return true
+							})
+						}
+
+						lastMessage = newMessage
+					})
 				}
 			}
 		}

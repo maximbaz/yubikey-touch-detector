@@ -8,5 +8,6 @@ require (
 	github.com/scylladb/go-set v1.0.2
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/vtolstov/go-ioctl v0.0.0-20151206205506-6be9cced4810
 	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7 // indirect
 )

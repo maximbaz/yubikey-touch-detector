@@ -12,6 +12,10 @@ export GOFLAGS := -buildmode=pie -trimpath
 .PHONY: local
 local: vendor build
 
+.PHONY: run
+run: local
+	go run main.go
+
 .PHONY: build
 build: main.go detector/ notifier/
 	go build -o $(BIN) main.go

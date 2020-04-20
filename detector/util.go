@@ -1,11 +1,6 @@
 package detector
 
 import (
-	"fmt"
-	"io/ioutil"
-	"path"
-	"strings"
-
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
 )
@@ -18,15 +13,4 @@ func initInotifyWatcher(detector string, path string, eventTypes ...notify.Event
 	}
 	log.Debugf("%v watcher on '%v' is successfully established", detector, path)
 	return events
-}
-
-func isYubikeyHidrawDevice(devicePath string) bool {
-	if strings.Contains(devicePath, "hidraw") {
-		if info, err := ioutil.ReadFile(fmt.Sprintf("/sys/class/hidraw/%v/device/uevent", path.Base(devicePath))); err == nil {
-			if strings.Contains(strings.ToLower(string(info)), "yubikey") {
-				return true
-			}
-		}
-	}
-	return false
 }

@@ -1,8 +1,10 @@
 package detector
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -63,4 +65,15 @@ func WatchHMAC(notifiers *sync.Map) {
 			}
 		}
 	}
+}
+
+func isYubikeyHidrawDevice(devicePath string) bool {
+	if strings.HasPrefix(devicePath, "/dev/hidraw") {
+		if info, err := ioutil.ReadFile(fmt.Sprintf("/sys/class/hidraw/%v/device/uevent", path.Base(devicePath))); err == nil {
+			if strings.Contains(strings.ToLower(string(info)), "yubikey") {
+				return true
+			}
+		}
+	}
+	return false
 }

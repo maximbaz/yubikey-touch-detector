@@ -97,11 +97,9 @@ _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#fa
 
 #### Detecting u2f operations
 
-In order to detect whether a U2F operation requests a touch on YubiKey, the app is watching `/dev/hidraw*` devices that are labeled as `YubiKey`.
+In order to detect whether a U2F/FIDO2 operation requests a touch on YubiKey, the app is listening on the appropriate `/dev/hidraw*` device for corresponding messages as per FIDO spec.
 
-It was noticed that one of those devices gets opened when YubiKey starts waiting for a user to touch the device, and closed when it stops waiting for a touch.
-
-This app will thus watch for `OPEN` and `CLOSE` events on those files, and when event occurs will toggle the touch indicator.
+See `detector/u2f.go` for more info on implementation details, the source code is documented and contains relevant links to the spec.
 
 ### Detecting gpg operations
 

@@ -146,10 +146,12 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 			if u2fOffTimer != nil {
 				u2fOffTimer.Stop()
 			}
-			notifiers.Range(func(k, v interface{}) bool {
-				v.(chan notifier.Message) <- notifier.U2F_OFF
-				return true
-			})
+			if lastMessage != notifier.U2F_OFF {
+				notifiers.Range(func(k, v interface{}) bool {
+					v.(chan notifier.Message) <- notifier.U2F_OFF
+					return true
+				})
+			}
 			return
 		}
 

@@ -95,7 +95,7 @@ Your YubiKey may require a physical touch to confirm these operations:
 
 _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)_
 
-#### Detecting u2f operations
+### Detecting u2f operations
 
 In order to detect whether a U2F/FIDO2 operation requests a touch on YubiKey, the app is listening on the appropriate `/dev/hidraw*` device for corresponding messages as per FIDO spec.
 

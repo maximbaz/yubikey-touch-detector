@@ -74,7 +74,7 @@ func main() {
 	}
 
 	requestGPGCheck := make(chan bool)
-	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, gpgPubringPath)
+	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
 
 	go detector.WatchU2F(notifiers)
 	go detector.WatchHMAC(notifiers)

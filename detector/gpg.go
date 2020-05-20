@@ -1,9 +1,7 @@
 package detector
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -49,7 +47,7 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 }
 
 // CheckGPGOnRequest checks whether YubiKey is actually waiting for a touch on a GPG request
-func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map, gpgPubringPath string) {
+func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
 	for {
 		<-requestGPGCheck
 
@@ -76,8 +74,6 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map, gpgPubrin
 				break
 			}
 		}
-
-		cleanupGPGTempFiles(gpgPubringPath)
 	}
 }
 
@@ -87,22 +83,4 @@ func checkGPGCardStatus() *exec.Cmd {
 		log.Error(err)
 	}
 	return cmd
-}
-
-// gpg leaves temp files behind, remove them
-// https://github.com/maximbaz/yubikey-touch-detector/issues/8
-func cleanupGPGTempFiles(gpgPubringPath string) {
-	gpgDir := filepath.Dir(gpgPubringPath)
-
-	files, err := filepath.Glob(filepath.Join(gpgDir, ".#lk*"))
-	if err != nil {
-		log.Warnf("Unable to construct a glob to cleanup gpg temp files: %v", err)
-		return
-	}
-
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			log.Warnf("Unable to remove gpg temp file '%v': %v", f, err)
-		}
-	}
 }

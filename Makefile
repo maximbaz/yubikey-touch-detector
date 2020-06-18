@@ -6,6 +6,9 @@ LIB_DIR = $(DESTDIR)$(PREFIX)/lib
 BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 SHARE_DIR = $(DESTDIR)$(PREFIX)/share
 
+export CGO_CPPFLAGS := ${CPPFLAGS}
+export CGO_CFLAGS := ${CFLAGS}
+export CGO_CXXFLAGS := ${CXXFLAGS}
 export CGO_LDFLAGS := ${LDFLAGS}
 export GOFLAGS := -buildmode=pie -trimpath
 

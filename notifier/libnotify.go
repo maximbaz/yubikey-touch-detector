@@ -24,16 +24,23 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 		return
 	}
 
+	activateTouchWaits := 0
+
 	for {
 		value := <-touch
 		if value == GPG_ON || value == U2F_ON || value == HMAC_ON {
+			activateTouchWaits++
+		}
+		if value == GPG_OFF || value == U2F_OFF || value == HMAC_OFF {
+			activateTouchWaits--
+		}
+		if activateTouchWaits > 0 {
 			// Error check (!= nil) not possible because menefotto/go-libnotify
 			// uses a custom wrapper instead of builtin 'error'
 			if err := notification.Show(); err.Error() != "" {
 				log.Error("Cannot show notification: ", err.Error())
 			}
-		}
-		if value == GPG_OFF || value == U2F_OFF || value == HMAC_OFF {
+		} else {
 			// Error check (!= nil) not possible because menefotto/go-libnotify
 			// uses a custom wrapper instead of builtin 'error'
 			if err := notification.Close(); err.Error() != "" {

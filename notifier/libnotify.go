@@ -33,5 +33,10 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 			// uses a custom wrapper instead of builtin 'error'
 			notification.Show()
 		}
+		if value == GPG_OFF || value == U2F_OFF || value == HMAC_OFF {
+			// Error check (!= nil) not possible because menefotto/go-libnotify
+			// uses a custom wrapper instead of builtin 'error'
+			notification.Close()
+		}
 	}
 }

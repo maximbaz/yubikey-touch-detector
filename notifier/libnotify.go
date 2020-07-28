@@ -12,13 +12,11 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 	touch := make(chan Message, 10)
 	notifiers.Store("notifier/libnotify", touch)
 
-	init_success := libnotify.Init("yubikey-touch-detector")
-	defer libnotify.UnInit()
-
-	if !init_success {
+	if !libnotify.Init("yubikey-touch-detector") {
 		log.Error("Cannot initialize desktop notifications!")
 		return
 	}
+	defer libnotify.UnInit()
 
 	notification := libnotify.NotificationNew("YubiKey is waiting for a touch", "", "")
 	if notification == nil {

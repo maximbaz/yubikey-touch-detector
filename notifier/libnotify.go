@@ -3,8 +3,8 @@ package notifier
 import (
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	libnotify "github.com/menefotto/go-libnotify"
+	log "github.com/sirupsen/logrus"
 )
 
 // SetupLibnotifyNotifier configures a notifier to show all touch requests with libnotify

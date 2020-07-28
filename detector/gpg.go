@@ -66,6 +66,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
 				})
 
 				checkGPGCardStatus().Wait()
+				checkGPGCardStatus().Wait()
 
 				notifiers.Range(func(k, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.GPG_OFF

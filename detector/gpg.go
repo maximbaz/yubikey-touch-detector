@@ -52,21 +52,15 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
 		<-requestGPGCheck
 
 		for i := 0; i < 20; i++ {
-			cmd := checkGPGCardStatus()
-			timer := time.AfterFunc(1000*time.Millisecond, func() {
-				cmd.Process.Kill()
-			})
-			err := cmd.Wait()
-			timer.Stop()
-
-			if err != nil {
+			if isGPGCardBusy() {
 				notifiers.Range(func(k, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.GPG_ON
 					return true
 				})
 
-				checkGPGCardStatus().Wait()
-				checkGPGCardStatus().Wait()
+				for isGPGCardBusy() || isGPGCardBusy() {
+					// wait...
+				}
 
 				notifiers.Range(func(k, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.GPG_OFF
@@ -78,10 +72,19 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
 	}
 }
 
-func checkGPGCardStatus() *exec.Cmd {
+func isGPGCardBusy() bool {
 	cmd := exec.Command("gpg", "--card-status")
 	if err := cmd.Start(); err != nil {
 		log.Error(err)
+		return false
 	}
-	return cmd
+
+	timer := time.AfterFunc(1000*time.Millisecond, func() {
+		cmd.Process.Kill()
+	})
+
+	err := cmd.Wait()
+	timer.Stop()
+
+	return err != nil
 }

@@ -83,8 +83,8 @@ func isGPGCardBusy() bool {
 		cmd.Process.Kill()
 	})
 
-	err := cmd.Wait()
+	cmd.Wait()
 	timer.Stop()
 
-	return err != nil
+	return cmd.ProcessState.ExitCode() == -1
 }

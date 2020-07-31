@@ -61,7 +61,12 @@ The app supports the following environment variables and CLI arguments (CLI args
 | `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY`        | `--libnotify`        |
 | `YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH` | `--gpg-pubring-path` |
 
-You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`
+You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`, e.g. like so:
+
+```
+YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY=true
+YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH=/path/to/gpg/pubring.kbx
+```
 
 #### Integrating with other UI components
 

@@ -55,17 +55,16 @@ $ yubikey-touch-detector --libnotify
 
 The app supports the following environment variables and CLI arguments (CLI args take precedence):
 
-| Environment var                           | CLI arg              |
-| ----------------------------------------- | -------------------- |
-| `YUBIKEY_TOUCH_DETECTOR_VERBOSE`          | `-v`                 |
-| `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY`        | `--libnotify`        |
-| `YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH` | `--gpg-pubring-path` |
+| Environment var                    | CLI arg       |
+| ---------------------------------- | ------------- |
+| `YUBIKEY_TOUCH_DETECTOR_VERBOSE`   | `-v`          |
+| `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY` | `--libnotify` |
 
 You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`, e.g. like so:
 
 ```
+YUBIKEY_TOUCH_DETECTOR_VERBOSE=true
 YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY=true
-YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH=/path/to/gpg/pubring.kbx
 ```
 
 #### Integrating with other UI components
@@ -112,7 +111,7 @@ This detection is based on a "busy check" - when the card is busy (i.e. `gpg --c
 
 In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after `$GNUPGHOME/pubring.kbx` (or `$HOME/.gnupg/pubring.kbx`) file is opened (the app is thus watching for `OPEN` events on that file).
 
-> If the path to your `pubring.kbx` file differs, provide it via `--gpg-pubring-path` CLI argument.
+> If the path to your `pubring.kbx` file differs, define `$GNUPGHOME` environment variable, globally or in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`.
 
 ### Detecting ssh operations
 

@@ -19,11 +19,9 @@ const appVersion = "1.8.1"
 
 func main() {
 	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}
-	defaultGpgPubringPath := "$GNUPGHOME/pubring.kbx or $HOME/.gnupg/pubring.kbx"
 
 	envVerbose := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_VERBOSE"))]
 	envLibnotify := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY"))]
-	envGpgPubringPath := os.Getenv("YUBIKEY_TOUCH_DETECTOR_GPG_PUBRING_PATH")
 
 	var version bool
 	var verbose bool
@@ -33,12 +31,7 @@ func main() {
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&verbose, "v", envVerbose, "print verbose output")
 	flag.BoolVar(&libnotify, "libnotify", envLibnotify, "show desktop notifications using libnotify")
-	flag.StringVar(&gpgPubringPath, "gpg-pubring-path", envGpgPubringPath, "path to gpg's pubring.kbx file")
 	flag.Parse()
-
-	if gpgPubringPath == "" {
-		gpgPubringPath = defaultGpgPubringPath
-	}
 
 	if version {
 		fmt.Println("YubiKey touch detector version:", appVersion)
@@ -49,13 +42,11 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	if gpgPubringPath == defaultGpgPubringPath {
-		gpgHome := os.Getenv("GNUPGHOME")
-		if gpgHome != "" {
-			gpgPubringPath = path.Join(gpgHome, "pubring.kbx")
-		} else {
-			gpgPubringPath = "$HOME/.gnupg/pubring.kbx"
-		}
+	gpgHome := os.Getenv("GNUPGHOME")
+	if gpgHome != "" {
+		gpgPubringPath = path.Join(gpgHome, "pubring.kbx")
+	} else {
+		gpgPubringPath = "$HOME/.gnupg/pubring.kbx"
 	}
 
 	gpgPubringPath = os.ExpandEnv(gpgPubringPath)

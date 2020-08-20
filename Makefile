@@ -42,7 +42,7 @@ dist: clean vendor build
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
 
 	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	cp "$(BIN)" "$(BIN).service" LICENSE README.md "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	cp "$(BIN)" "$(BIN).service" "$(BIN).socket" LICENSE README.md "$(TMP)/$(BIN)-$(VERSION)-linux64"
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
 
 	mkdir -p dist
@@ -60,5 +60,6 @@ dist: clean vendor build
 install:
 	install -Dm755 -t "$(BIN_DIR)/" $(BIN)
 	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).service"
+	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).socket"
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE
 	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" README.md

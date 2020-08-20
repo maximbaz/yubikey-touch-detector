@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/coreos/go-systemd/v22/activation"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,19 +24,33 @@ func SetupUnixSocketNotifier(notifiers *sync.Map, exits *sync.Map) {
 		return
 	}
 
-	socketFile := path.Join(socketDir, "yubikey-touch-detector.socket")
-	if _, err := os.Stat(socketFile); err == nil {
-		log.Warnf("'%v' already exists, assuming it's an obsolete one and trying to recover", socketFile)
-		if err = os.Remove(socketFile); err != nil {
-			log.Errorf("Cannot remove '%v' in order to recover from possible previous crash", socketFile)
-			return
-		}
+	listeners, err := activation.Listeners()
+	if err != nil {
+		log.Errorf("Error receiving activation listeners from systemd, proceeding to create our own unix socket: %v", err)
 	}
 
-	socket, err := net.Listen("unix", socketFile)
-	if err != nil {
-		log.Error("Cannot establish a proxy SSH socket: ", err)
-		return
+	var socket net.Listener
+	if len(listeners) > 1 {
+		log.Warn("Received more than one listener from systemd which should not be possible, using the first one")
+		socket = listeners[0]
+	} else if len(listeners) == 1 {
+		socket = listeners[0]
+	} else {
+		socketFile := path.Join(socketDir, "yubikey-touch-detector.socket")
+
+		if _, err := os.Stat(socketFile); err == nil {
+			log.Warnf("'%v' already exists, assuming it's obsolete and trying to recover", socketFile)
+			if err = os.Remove(socketFile); err != nil {
+				log.Errorf("Cannot remove '%v' in order to recover from possible previous crash", socketFile)
+				return
+			}
+		}
+
+		socket, err = net.Listen("unix", socketFile)
+		if err != nil {
+			log.Error("Cannot establish a unix socket listener: ", err)
+			return
+		}
 	}
 
 	exit := make(chan bool)

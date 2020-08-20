@@ -14,11 +14,18 @@ _See also: [FAQ: Which UI components are already integrated with this app?](#faq
 
 On Arch Linux, you can install it with `pacman -S yubikey-touch-detector`
 
-The package also installs a systemd service, make sure to start and enable it:
+The package also installs a systemd service and socket. If you want the app to launch on startup, just enable the service like so:
 
 ```
 $ systemctl --user daemon-reload
 $ systemctl --user enable --now yubikey-touch-detector.service
+```
+
+If you want the service to be started only when there is a listener on Unix socket, enable the socket instead like so:
+
+```
+$ systemctl --user daemon-reload
+$ systemctl --user enable --now yubikey-touch-detector.socket
 ```
 
 Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).
@@ -69,7 +76,7 @@ YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY=true
 
 #### Integrating with other UI components
 
-First of all, make sure the app is always running (e.g. start a provided systemd user service).
+First of all, make sure the app is always running (e.g. start a provided systemd user service or socket).
 
 Next, in order to integrate the app with other UI components to display a visible indicator, use any of the available notifiers in the `notifier` subpackage.
 

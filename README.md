@@ -137,10 +137,12 @@ For `sudo` requests with `pam-u2f`, please refer to the documentation on [Yubico
 For `gpg` and `ssh` operations, install [ykman](https://github.com/Yubico/yubikey-manager) and use the following commands:
 
 ```
-$ ykman openpgp touch sig on   # For sign operations
-$ ykman openpgp touch enc on   # For decrypt operations
-$ ykman openpgp touch aut on   # For ssh operations
+$ ykman openpgp set-touch sig on   # For sign operations
+$ ykman openpgp set-touch enc on   # For decrypt operations
+$ ykman openpgp set-touch aut on   # For ssh operations
 ```
+
+If you are going to frequently use OpenPGP operations, `cached` or `cached-fixed` may be better for you. See more details [here](https://github.com/drduh/YubiKey-Guide#require-touch).
 
 Make sure to unplug and plug back in your YubiKey after changing any of the options above.
 

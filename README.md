@@ -165,3 +165,4 @@ r %h/.gnupg/.#lk*
 - [waybar](https://github.com/Alexays/Waybar) can display an indicator via custom [yubikey](https://github.com/maximbaz/dotfiles/blob/master/.local/bin/waybar-yubikey) module.
 - [py3status](https://github.com/ultrabug/py3status) can display an indicator via [yubikey](https://github.com/ultrabug/py3status/blob/master/py3status/modules/yubikey.py) module.
 - [barista](https://github.com/soumya92/barista) can display an indicator via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.
+- [polybar](https://github.com/polybar/polybar) can be made to display an indicator via `polybar-msg`, [like so](https://github.com/maximbaz/yubikey-touch-detector/issues/20#issuecomment-736136283)

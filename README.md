@@ -146,18 +146,6 @@ If you are going to frequently use OpenPGP operations, `cached` or `cached-fixed
 
 Make sure to unplug and plug back in your YubiKey after changing any of the options above.
 
-<a name="faq-temp-gpg-files"></a>
-
-#### What are those `.#lk*` files in `~/.gnupg` and how to clean them up?
-
-These are temporary files being created by `gpg` while `yubikey-touch-detector` is checking if YubiKey is waiting for a touch. The hope is that we can implement a different implementation to detect touch request using some sort of smartcard protocol (like it is done for WebAuthn / U2F), which would stop producing these files.
-
-Until then, you have to manually clean them up. One way is to use `systemd-tmpfiles`, which requires you to create `~/.config/user-tmpfiles.d/gnupg.conf` with the contents below and if necessary enabling `systemd-tmpfiles-setup` service:
-
-```
-r %h/.gnupg/.#lk*
-```
-
 <a name="faq-existing-ui-integrations"></a>
 
 #### Which UI components are already integrated with this app?

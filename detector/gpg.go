@@ -73,7 +73,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
 }
 
 func isGPGCardBusy() bool {
-	cmd := exec.Command("gpg", "--card-status")
+	cmd := exec.Command("gpg", "--lock-never", "--card-status")
 	if err := cmd.Start(); err != nil {
 		log.Error(err)
 		return false

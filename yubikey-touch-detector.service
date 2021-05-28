@@ -1,9 +1,11 @@
 [Unit]
 Description=Detects when your YubiKey is waiting for a touch
+Requires=yubikey-touch-detector.socket
 
 [Service]
 ExecStart=/usr/bin/yubikey-touch-detector
 EnvironmentFile=-%E/yubikey-touch-detector/service.conf
 
 [Install]
+Also=yubikey-touch-detector.socket
 WantedBy=default.target

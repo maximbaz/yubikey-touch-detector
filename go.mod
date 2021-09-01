@@ -4,7 +4,8 @@ go 1.16
 
 require (
 	github.com/coreos/go-systemd/v22 v22.3.2
-	github.com/menefotto/go-libnotify v0.0.0-20160821232856-351dc16572b9
+	github.com/esiqveland/notify v0.11.0
+	github.com/godbus/dbus/v5 v5.0.4
 	github.com/rjeczalik/notify v0.9.2
 	github.com/scylladb/go-set v1.0.2
 	github.com/sirupsen/logrus v1.8.1

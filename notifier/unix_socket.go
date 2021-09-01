@@ -88,11 +88,11 @@ func SetupUnixSocketNotifier(notifiers *sync.Map, exits *sync.Map) {
 			return
 		}
 
-		go notify(listener, touchListeners, &touchListenersMutex)
+		go unixSocketNotify(listener, touchListeners, &touchListenersMutex)
 	}
 }
 
-func notify(listener net.Conn, touchListeners map[*net.Conn]chan []byte, touchListenersMutex *sync.RWMutex) {
+func unixSocketNotify(listener net.Conn, touchListeners map[*net.Conn]chan []byte, touchListenersMutex *sync.RWMutex) {
 	values := make(chan []byte)
 	touchListenersMutex.Lock()
 	touchListeners[&listener] = values

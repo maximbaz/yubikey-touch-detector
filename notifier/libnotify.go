@@ -2,8 +2,10 @@ package notifier
 
 import (
 	"sync"
+	"sync/atomic"
 
-	libnotify "github.com/menefotto/go-libnotify"
+	"github.com/esiqveland/notify"
+	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -12,17 +14,42 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 	touch := make(chan Message, 10)
 	notifiers.Store("notifier/libnotify", touch)
 
-	if !libnotify.Init("yubikey-touch-detector") {
-		log.Error("Cannot initialize desktop notifications!")
+	conn, err := dbus.SessionBusPrivate()
+	if err != nil {
+		log.Error("Cannot initialize desktop notifications, unable to create session bus: ", err)
 		return
 	}
-	defer libnotify.UnInit()
+	defer conn.Close()
 
-	notification := libnotify.NotificationNew("YubiKey is waiting for a touch", "", "")
-	if notification == nil {
-		log.Error("Cannot create desktop notification!")
+	if err := conn.Auth(nil); err != nil {
+		log.Error("Cannot initialize desktop notifications, unable to authenticate: ", err)
 		return
 	}
+
+	if err := conn.Hello(); err != nil {
+		log.Error("Cannot initialize desktop notifications, unable get bus name: ", err)
+		return
+	}
+
+	notification := notify.Notification{
+		AppName: "yubikey-touch-detector",
+		Summary: "YubiKey is waiting for a touch",
+	}
+
+	reset := func(msg *notify.NotificationClosedSignal) {
+		atomic.CompareAndSwapUint32(&notification.ReplacesID, msg.ID, 0)
+	}
+
+	notifier, err := notify.New(
+		conn,
+		notify.WithOnClosed(reset),
+		notify.WithLogger(log.StandardLogger()),
+	)
+	if err != nil {
+		log.Error("Cannot initialize desktop notifications, unable to initialize D-Bus notifier interface: ", err)
+		return
+	}
+	defer notifier.Close()
 
 	activeTouchWaits := 0
 
@@ -35,16 +62,17 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 			activeTouchWaits--
 		}
 		if activeTouchWaits > 0 {
-			// Error check (!= nil) not possible because menefotto/go-libnotify
-			// uses a custom wrapper instead of builtin 'error'
-			if err := notification.Show(); err.Error() != "" {
-				log.Error("Cannot show notification: ", err.Error())
+			id, err := notifier.SendNotification(notification)
+			if err != nil {
+				log.Error("Cannot show notification: ", err)
+				continue
 			}
-		} else {
-			// Error check (!= nil) not possible because menefotto/go-libnotify
-			// uses a custom wrapper instead of builtin 'error'
-			if err := notification.Close(); err.Error() != "" {
-				log.Error("Cannot close notification: ", err.Error())
+
+			atomic.CompareAndSwapUint32(&notification.ReplacesID, 0, id)
+		} else if id := atomic.LoadUint32(&notification.ReplacesID); id != 0 {
+			if _, err := notifier.CloseNotification(id); err != nil {
+				log.Error("Cannot close notification: ", err)
+				continue
 			}
 		}
 	}

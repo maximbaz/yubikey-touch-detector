@@ -10,7 +10,7 @@ export CGO_CPPFLAGS := ${CPPFLAGS}
 export CGO_CFLAGS := ${CFLAGS}
 export CGO_CXXFLAGS := ${CXXFLAGS}
 export CGO_LDFLAGS := ${LDFLAGS}
-export GOFLAGS := -buildmode=pie -trimpath
+export GOFLAGS := -buildmode=pie -trimpath -ldflags=-linkmode=external
 
 .PHONY: local
 local: vendor build

@@ -33,6 +33,7 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 
 	notification := notify.Notification{
 		AppName: "yubikey-touch-detector",
+		AppIcon: "yubikey-touch-detector",
 		Summary: "YubiKey is waiting for a touch",
 	}
 

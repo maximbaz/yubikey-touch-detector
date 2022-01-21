@@ -155,3 +155,4 @@ Make sure to unplug and plug back in your YubiKey after changing any of the opti
 - [barista](https://github.com/soumya92/barista) can display an indicator via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.
 - [polybar](https://github.com/polybar/polybar) can be made to display an indicator via `polybar-msg`, [like so](https://github.com/maximbaz/yubikey-touch-detector/issues/20#issuecomment-736136283)
 - [xfce4-panel](https://docs.xfce.org/xfce/xfce4-panel/start) can display an indicator via [xfce4-yubikey-touch-detector-plugin](https://github.com/invidian/xfce4-yubikey-touch-detector-plugin).
+- [AwesomeWM](https://awesomewm.org/) can display an indicator via widgets, [like so](https://github.com/maximbaz/yubikey-touch-detector/wiki/AwesomeWM)

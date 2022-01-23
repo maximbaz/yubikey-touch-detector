@@ -6,7 +6,7 @@ For example, an integration with [i3wm](https://i3wm.org/) and [py3status](https
 
 ![demo](https://user-images.githubusercontent.com/1177900/46533233-2bcf5580-c8a4-11e8-99e7-1418e89615f5.gif)
 
-_See also: [FAQ: Which UI components are already integrated with this app?](#faq-existing-ui-integrations)_
+_See also: [Wiki: Which UI components are already integrated with this app?](https://github.com/maximbaz/yubikey-touch-detector/wiki)_
 
 ## Installation
 
@@ -145,14 +145,3 @@ $ ykman openpgp set-touch aut on   # For ssh operations
 If you are going to frequently use OpenPGP operations, `cached` or `cached-fixed` may be better for you. See more details [here](https://github.com/drduh/YubiKey-Guide#require-touch).
 
 Make sure to unplug and plug back in your YubiKey after changing any of the options above.
-
-<a name="faq-existing-ui-integrations"></a>
-
-#### Which UI components are already integrated with this app?
-
-- [waybar](https://github.com/Alexays/Waybar) can display an indicator via custom [yubikey](https://github.com/maximbaz/dotfiles/blob/master/.local/bin/waybar-yubikey) module.
-- [py3status](https://github.com/ultrabug/py3status) can display an indicator via [yubikey](https://github.com/ultrabug/py3status/blob/master/py3status/modules/yubikey.py) module.
-- [barista](https://github.com/soumya92/barista) can display an indicator via [yubikey](https://github.com/soumya92/barista/blob/master/samples/yubikey/yubikey.go) module.
-- [polybar](https://github.com/polybar/polybar) can be made to display an indicator via `polybar-msg`, [like so](https://github.com/maximbaz/yubikey-touch-detector/issues/20#issuecomment-736136283)
-- [xfce4-panel](https://docs.xfce.org/xfce/xfce4-panel/start) can display an indicator via [xfce4-yubikey-touch-detector-plugin](https://github.com/invidian/xfce4-yubikey-touch-detector-plugin).
-- [AwesomeWM](https://awesomewm.org/) can display an indicator via widgets, [like so](https://github.com/maximbaz/yubikey-touch-detector/wiki/AwesomeWM)

@@ -58,7 +58,7 @@ func main() {
 	go setupExitSignalWatch(exits)
 
 	notifiers := &sync.Map{}
-	go notifier.SetupStdErrNotifier(notifiers)
+	go notifier.SetupDebugNotifier(notifiers)
 	go notifier.SetupUnixSocketNotifier(notifiers, exits)
 	if libnotify {
 		go notifier.SetupLibnotifyNotifier(notifiers)

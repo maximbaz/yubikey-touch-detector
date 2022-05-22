@@ -23,17 +23,20 @@ func main() {
 	envVerbose := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_VERBOSE"))]
 	envLibnotify := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY"))]
 	envStdout := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_STDOUT"))]
+	envNosocket := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_NOSOCKET"))]
 
 	var version bool
 	var verbose bool
 	var libnotify bool
 	var stdout bool
+	var nosocket bool
 	var gpgPubringPath string
 
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&verbose, "v", envVerbose, "print verbose output")
 	flag.BoolVar(&libnotify, "libnotify", envLibnotify, "show desktop notifications using libnotify")
 	flag.BoolVar(&stdout, "stdout", envStdout, "Output notifications to stdout")
+	flag.BoolVar(&nosocket, "no-socket", envNosocket, "Disable default socket output")
 	flag.Parse()
 
 	if version {
@@ -62,7 +65,9 @@ func main() {
 
 	notifiers := &sync.Map{}
 	go notifier.SetupDebugNotifier(notifiers)
-	go notifier.SetupUnixSocketNotifier(notifiers, exits)
+	if !nosocket {
+		go notifier.SetupUnixSocketNotifier(notifiers, exits)
+	}
 	if libnotify {
 		go notifier.SetupLibnotifyNotifier(notifiers)
 	}

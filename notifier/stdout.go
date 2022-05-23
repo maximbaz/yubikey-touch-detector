@@ -1,7 +1,7 @@
 package notifier
 
 import (
-	"os"
+	"fmt"
 	"sync"
 )
 
@@ -12,7 +12,6 @@ func SetupStdoutNotifier(notifiers *sync.Map) {
 
 	for {
 		value := <-touch
-		os.Stdout.WriteString(string(value))
-		os.Stdout.WriteString("\n")
+		fmt.Println(value)
 	}
 }

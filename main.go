@@ -22,15 +22,21 @@ func main() {
 
 	envVerbose := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_VERBOSE"))]
 	envLibnotify := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY"))]
+	envStdout := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_STDOUT"))]
+	envNosocket := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_NOSOCKET"))]
 
 	var version bool
 	var verbose bool
 	var libnotify bool
+	var stdout bool
+	var nosocket bool
 	var gpgPubringPath string
 
 	flag.BoolVar(&version, "version", false, "print version and exit")
-	flag.BoolVar(&verbose, "v", envVerbose, "print verbose output")
+	flag.BoolVar(&verbose, "v", envVerbose, "enable debug logging")
 	flag.BoolVar(&libnotify, "libnotify", envLibnotify, "show desktop notifications using libnotify")
+	flag.BoolVar(&stdout, "stdout", envStdout, "print notifications to stdout")
+	flag.BoolVar(&nosocket, "no-socket", envNosocket, "disable unix socket notifier")
 	flag.Parse()
 
 	if version {
@@ -42,6 +48,9 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	log.Debug("Starting YubiKey touch detector")
+
 	gpgHome := os.Getenv("GNUPGHOME")
 	if gpgHome != "" {
 		gpgPubringPath = path.Join(gpgHome, "pubring.kbx")
@@ -51,17 +60,22 @@ func main() {
 
 	gpgPubringPath = os.ExpandEnv(gpgPubringPath)
 
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.Debug("Starting YubiKey touch detector")
-
 	exits := &sync.Map{}
 	go setupExitSignalWatch(exits)
 
 	notifiers := &sync.Map{}
-	go notifier.SetupStdErrNotifier(notifiers)
-	go notifier.SetupUnixSocketNotifier(notifiers, exits)
+
+	if verbose {
+		go notifier.SetupDebugNotifier(notifiers)
+	}
+	if !nosocket {
+		go notifier.SetupUnixSocketNotifier(notifiers, exits)
+	}
 	if libnotify {
 		go notifier.SetupLibnotifyNotifier(notifiers)
+	}
+	if stdout {
+		go notifier.SetupStdoutNotifier(notifiers)
 	}
 
 	requestGPGCheck := make(chan bool)

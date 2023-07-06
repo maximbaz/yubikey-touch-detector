@@ -31,9 +31,13 @@ $ systemctl --user enable --now yubikey-touch-detector.socket
 Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).
 
 Finally you can install the app with `go`:
-
+- For Go <1.17
 ```
 $ go get -u github.com/maximbaz/yubikey-touch-detector
+```
+- For [Go >1.17](https://go.dev/doc/go-get-install-deprecation):
+```
+$ go install github.com/maximbaz/yubikey-touch-detector@latest
 ```
 
 This places the binary in your `$GOPATH/bin` folder, as well as the sources in `$GOPATH/src` for you to use the detection functions in your own code.

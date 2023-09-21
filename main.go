@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"strings"
@@ -81,13 +82,13 @@ func main() {
 	go detector.WatchU2F(notifiers)
 	go detector.WatchHMAC(notifiers)
 
-	if _, err := os.Stat(gpgPubringPath); err == nil {
+	if hasGpg(gpgPubringPath) {
 		requestGPGCheck := make(chan bool)
 		go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
 		go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
 		go detector.WatchSSH(requestGPGCheck, exits)
 	} else {
-		log.Debugf("'%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)
+		log.Debugf("No 'gpg' binary in $PATH or '%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)
 	}
 	wait := make(chan bool)
 	<-wait
@@ -109,4 +110,10 @@ func setupExitSignalWatch(exits *sync.Map) {
 
 	log.Debug("Stopping YubiKey touch detector")
 	os.Exit(0)
+}
+
+func hasGpg(gpgPubringPath string) bool {
+	_, err1 := exec.LookPath("gpg")
+	_, err2 := os.Stat(gpgPubringPath)
+	return err1 == nil && err2 == nil
 }

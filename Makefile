@@ -64,3 +64,4 @@ install:
 	install -Dm644 -t "$(SHARE_DIR)/$(BIN)/" yubico.png
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE
 	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" README.md
+	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" service.conf.example

@@ -4,7 +4,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/adrg/xdg"
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
@@ -32,15 +31,9 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 		return
 	}
 
-	appIcon, err := xdg.SearchDataFile("yubikey-touch-detector/yubico.png")
-	if err != nil {
-		log.Warn("Cannot locate notification icon: ", err)
-		appIcon = "yubikey-touch-detector"
-	}
-
 	notification := notify.Notification{
 		AppName: "yubikey-touch-detector",
-		AppIcon: appIcon,
+		AppIcon: "yubikey-touch-detector",
 		Summary: "YubiKey is waiting for a touch",
 	}
 

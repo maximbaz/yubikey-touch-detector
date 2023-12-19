@@ -1,0 +1,11 @@
+# enable debug logging
+YUBIKEY_TOUCH_DETECTOR_VERBOSE=false
+
+# show desktop notifications using libnotify
+YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY=true
+
+# do not print notifications to stdout
+YUBIKEY_TOUCH_DETECTOR_STDOUT=false
+
+# disable Un*x socket notifier
+YUBIKEY_TOUCH_DETECTOR_NOSOCKET=false

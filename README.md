@@ -70,13 +70,10 @@ The app supports the following environment variables and CLI arguments (CLI args
 | ---------------------------------- | ------------- |
 | `YUBIKEY_TOUCH_DETECTOR_VERBOSE`   | `-v`          |
 | `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY` | `--libnotify` |
+| `YUBIKEY_TOUCH_DETECTOR_STDOUT`    | `--stdout`    |
+| `YUBIKEY_TOUCH_DETECTOR_NOSOCKET`  | `--no-socket` |
 
-You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`, e.g. like so:
-
-```
-YUBIKEY_TOUCH_DETECTOR_VERBOSE=true
-YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY=true
-```
+You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf` - see `service.conf.example` for a configuration example.
 
 #### Integrating with other UI components
 

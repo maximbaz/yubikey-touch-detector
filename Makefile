@@ -61,5 +61,7 @@ install:
 	install -Dm755 -t "$(BIN_DIR)/" $(BIN)
 	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).service"
 	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).socket"
+	install -Dm644 -t "$(SHARE_DIR)/icons/hicolor/128x128/apps/" yubikey-touch-detector.png
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE
 	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" README.md
+	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" service.conf.example

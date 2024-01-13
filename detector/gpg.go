@@ -1,13 +1,14 @@
 package detector
 
 import (
-	"os/exec"
 	"sync"
 	"time"
 
-	"github.com/maximbaz/yubikey-touch-detector/notifier"
+	"github.com/proglottis/gpgme"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/maximbaz/yubikey-touch-detector/notifier"
 )
 
 // WatchGPG watches for hints that YubiKey is maybe waiting for a touch on a GPG request
@@ -27,64 +28,53 @@ func WatchGPG(gpgPubringPath string, requestGPGCheck chan bool) {
 	initWatcher()
 	defer notify.Stop(events)
 
-	for {
-		select {
-		case event := <-events:
-			switch event.Event() {
-			case notify.InOpen:
-				select {
-				case requestGPGCheck <- true:
-				default:
-				}
+	for event := range events {
+		switch event.Event() {
+		case notify.InOpen:
+			select {
+			case requestGPGCheck <- true:
 			default:
-				log.Debugf("pubring.kbx received file event '%+v', recreating the watcher.", event.Event())
-				notify.Stop(events)
-				time.Sleep(5 * time.Second)
-				initWatcher()
 			}
+		default:
+			log.Debugf("pubring.kbx received file event '%+v', recreating the watcher.", event.Event())
+			notify.Stop(events)
+			time.Sleep(5 * time.Second)
+			initWatcher()
 		}
 	}
 }
 
 // CheckGPGOnRequest checks whether YubiKey is actually waiting for a touch on a GPG request
-func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map) {
-	for {
-		<-requestGPGCheck
+func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map, ctx *gpgme.Context) {
+	check := func(response chan error, ctx *gpgme.Context, t *time.Timer) {
+		err := ctx.AssuanSend("LEARN", nil, nil, func(status, args string) error {
+			log.Debugf("AssuanSend/status: %v, %v", status, args)
 
-		for i := 0; i < 20; i++ {
-			if isGPGCardBusy() {
-				notifiers.Range(func(k, v interface{}) bool {
-					v.(chan notifier.Message) <- notifier.GPG_ON
-					return true
-				})
-
-				for isGPGCardBusy() || isGPGCardBusy() {
-					// wait...
-				}
-
-				notifiers.Range(func(k, v interface{}) bool {
-					v.(chan notifier.Message) <- notifier.GPG_OFF
-					return true
-				})
-				break
-			}
+			return nil
+		})
+		if !t.Stop() {
+			response <- err
 		}
 	}
-}
+	for range requestGPGCheck {
+		resp := make(chan error)
 
-func isGPGCardBusy() bool {
-	cmd := exec.Command("gpg", "--lock-never", "--card-status")
-	if err := cmd.Start(); err != nil {
-		log.Error(err)
-		return false
+		t := time.AfterFunc(200*time.Millisecond, func() {
+			notifiers.Range(func(_, v interface{}) bool {
+				v.(chan notifier.Message) <- notifier.GPG_ON
+				return true
+			})
+			err := <-resp
+			if err != nil {
+				log.Errorf("Agent returned an error: %v", err)
+			}
+			notifiers.Range(func(_, v interface{}) bool {
+				v.(chan notifier.Message) <- notifier.GPG_OFF
+				return true
+			})
+		})
+
+		time.Sleep(100 * time.Millisecond) // wait for GPG to start talking with scdaemon
+		check(resp, ctx, t)
 	}
-
-	timer := time.AfterFunc(1000*time.Millisecond, func() {
-		cmd.Process.Kill()
-	})
-
-	cmd.Wait()
-	timer.Stop()
-
-	return cmd.ProcessState.ExitCode() == -1
 }

@@ -1,7 +1,6 @@
 package detector
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -9,10 +8,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/maximbaz/yubikey-touch-detector/notifier"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
 	"github.com/vtolstov/go-ioctl"
+
+	"github.com/maximbaz/yubikey-touch-detector/notifier"
 )
 
 const (
@@ -59,7 +59,7 @@ func WatchU2F(notifiers *sync.Map) {
 	devicesEvents := initInotifyWatcher("U2F", "/dev", notify.Create)
 	defer notify.Stop(devicesEvents)
 
-	if devices, err := ioutil.ReadDir("/dev"); err == nil {
+	if devices, err := os.ReadDir("/dev"); err == nil {
 		for _, device := range devices {
 			checkAndInitWatcher(path.Join("/dev", device.Name()))
 		}
@@ -67,13 +67,10 @@ func WatchU2F(notifiers *sync.Map) {
 		log.Errorf("Cannot list devices in '/dev' to find connected YubiKeys: %v", err)
 	}
 
-	for {
-		select {
-		case event := <-devicesEvents:
-			// Give a second for device to initialize before establishing a watcher
-			time.Sleep(1 * time.Second)
-			checkAndInitWatcher(event.Path())
-		}
+	for event := range devicesEvents {
+		// Give a second for device to initialize before establishing a watcher
+		time.Sleep(1 * time.Second)
+		checkAndInitWatcher(event.Path())
 	}
 }
 
@@ -147,7 +144,7 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 				u2fOffTimer.Stop()
 			}
 			if lastMessage != notifier.U2F_OFF {
-				notifiers.Range(func(k, v interface{}) bool {
+				notifiers.Range(func(_, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.U2F_OFF
 					return true
 				})
@@ -173,7 +170,7 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 		if isU2F || isFIDO2 {
 			// Signify U2F_ON if this is the first time we receive it
 			if lastMessage != notifier.U2F_ON {
-				notifiers.Range(func(k, v interface{}) bool {
+				notifiers.Range(func(_, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.U2F_ON
 					return true
 				})
@@ -187,7 +184,7 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 		// Signify U2F_OFF if no new messages arrive soon
 		u2fOffTimer = time.AfterFunc(u2fOffTimerDuration, func() {
 			if lastMessage != notifier.U2F_OFF {
-				notifiers.Range(func(k, v interface{}) bool {
+				notifiers.Range(func(_, v interface{}) bool {
 					v.(chan notifier.Message) <- notifier.U2F_OFF
 					return true
 				})

@@ -31,11 +31,15 @@ $ systemctl --user enable --now yubikey-touch-detector.socket
 Alternatively you can download the latest release from the [GitHub releases](https://github.com/maximbaz/yubikey-touch-detector/releases) page. All releases are signed with [my PGP key](https://keybase.io/maximbaz).
 
 Finally you can install the app with `go`:
+
 - For Go <1.17
+
 ```
 $ go get -u github.com/maximbaz/yubikey-touch-detector
 ```
+
 - For [Go >1.17](https://go.dev/doc/go-get-install-deprecation):
+
 ```
 $ go install github.com/maximbaz/yubikey-touch-detector@latest
 ```
@@ -120,6 +124,11 @@ This detection is based on a "busy check" - when the card is busy (i.e. `gpg --c
 In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after `$GNUPGHOME/pubring.kbx` (or `$HOME/.gnupg/pubring.kbx`) file is opened (the app is thus watching for `OPEN` events on that file).
 
 > If the path to your `pubring.kbx` file differs, define `$GNUPGHOME` environment variable, globally or in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`.
+
+Since v1.11.0 we started using `gpgme` to perform some operations above:
+
+- we are now using Assuan protocol to query card status, instead of spawning `gpg --card-status` processes.
+- we are now querying path to `pubring.kbx` from `gpgme`.
 
 ### Detecting ssh operations
 

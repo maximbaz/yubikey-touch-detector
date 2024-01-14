@@ -4,16 +4,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
 	"strings"
 	"sync"
 	"syscall"
 
+	"github.com/proglottis/gpgme"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/maximbaz/yubikey-touch-detector/detector"
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
-	log "github.com/sirupsen/logrus"
 )
 
 const appVersion = "1.10.1"
@@ -31,7 +32,6 @@ func main() {
 	var libnotify bool
 	var stdout bool
 	var nosocket bool
-	var gpgPubringPath string
 
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&verbose, "v", envVerbose, "enable debug logging")
@@ -51,15 +51,6 @@ func main() {
 
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.Debug("Starting YubiKey touch detector")
-
-	gpgHome := os.Getenv("GNUPGHOME")
-	if gpgHome != "" {
-		gpgPubringPath = path.Join(gpgHome, "pubring.kbx")
-	} else {
-		gpgPubringPath = "$HOME/.gnupg/pubring.kbx"
-	}
-
-	gpgPubringPath = os.ExpandEnv(gpgPubringPath)
 
 	exits := &sync.Map{}
 	go setupExitSignalWatch(exits)
@@ -82,13 +73,21 @@ func main() {
 	go detector.WatchU2F(notifiers)
 	go detector.WatchHMAC(notifiers)
 
-	if hasGpg(gpgPubringPath) {
-		requestGPGCheck := make(chan bool)
-		go detector.CheckGPGOnRequest(requestGPGCheck, notifiers)
-		go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
-		go detector.WatchSSH(requestGPGCheck, exits)
+	if ctx, err := gpgme.New(); err != nil {
+		log.Debugf("Cannot initialize GPG context: %v. Disabling GPG and SSH watchers.", err)
+	} else if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
+		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
 	} else {
-		log.Debugf("No 'gpg' binary in $PATH or '%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)
+		gpgPubringPath := path.Join(gpgme.GetDirInfo("homedir"), "pubring.kbx")
+		if _, err := os.Stat(gpgPubringPath); err == nil {
+
+			requestGPGCheck := make(chan bool)
+			go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
+			go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
+			go detector.WatchSSH(requestGPGCheck, exits)
+		} else {
+			log.Debugf("'%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)
+		}
 	}
 	wait := make(chan bool)
 	<-wait
@@ -101,7 +100,7 @@ func setupExitSignalWatch(exits *sync.Map) {
 	<-exitSignal
 	println()
 
-	exits.Range(func(k, v interface{}) bool {
+	exits.Range(func(_, v interface{}) bool {
 		exit := v.(chan bool)
 		exit <- true // Notify exit watcher
 		<-exit       // Wait for confirmation
@@ -110,10 +109,4 @@ func setupExitSignalWatch(exits *sync.Map) {
 
 	log.Debug("Stopping YubiKey touch detector")
 	os.Exit(0)
-}
-
-func hasGpg(gpgPubringPath string) bool {
-	_, err1 := exec.LookPath("gpg")
-	_, err2 := os.Stat(gpgPubringPath)
-	return err1 == nil && err2 == nil
 }

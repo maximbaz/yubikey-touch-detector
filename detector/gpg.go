@@ -59,7 +59,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map, ctx *gpgm
 	for range requestGPGCheck {
 		resp := make(chan error)
 
-		t := time.AfterFunc(200*time.Millisecond, func() {
+		t := time.AfterFunc(400*time.Millisecond, func() {
 			notifiers.Range(func(_, v interface{}) bool {
 				v.(chan notifier.Message) <- notifier.GPG_ON
 				return true
@@ -74,7 +74,7 @@ func CheckGPGOnRequest(requestGPGCheck chan bool, notifiers *sync.Map, ctx *gpgm
 			})
 		})
 
-		time.Sleep(100 * time.Millisecond) // wait for GPG to start talking with scdaemon
+		time.Sleep(200 * time.Millisecond) // wait for GPG to start talking with scdaemon
 		check(resp, ctx, t)
 	}
 }

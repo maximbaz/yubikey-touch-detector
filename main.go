@@ -78,7 +78,11 @@ func main() {
 	} else if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
 		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
 	} else {
-		gpgPubringPath := path.Join(gpgme.GetDirInfo("homedir"), "pubring.kbx")
+		homeDir := ""
+		if homeDir, err = gpgme.GetDirInfo("homedir"); err != nil {
+			log.Debugf("Cannot initialize gpgme: %v. Disabling GPG and SSH watchers.", err)
+		}
+		gpgPubringPath := path.Join(homeDir, "pubring.kbx")
 		if _, err := os.Stat(gpgPubringPath); err == nil {
 
 			requestGPGCheck := make(chan bool)

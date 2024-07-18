@@ -3,6 +3,7 @@ package detector
 import (
 	"net"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"sync"
@@ -13,13 +14,26 @@ import (
 // WatchSSH watches for hints that YubiKey is maybe waiting for a touch on a SSH auth request
 func WatchSSH(requestGPGCheck chan bool, exits *sync.Map) {
 	socketFile := os.Getenv("SSH_AUTH_SOCK")
+
+	if socketFile == "" {
+		gpgAgentSocket, err := exec.Command("gpgconf", "--list-dirs", "agent-ssh-socket").Output()
+		if err != nil {
+			log.Error(err)
+		} else if len(gpgAgentSocket) != 0 {
+			socketFile = strings.TrimSuffix(string(gpgAgentSocket), "\n")
+		}
+	}
+
 	if socketFile == "" {
 		runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
-		if runtimeDir == "" {
-			log.Error("Cannot watch SSH, neither $SSH_AUTH_SOCK nor $XDG_RUNTIME_DIR are defined.")
-			return
+		if runtimeDir != "" {
+			socketFile = path.Join(runtimeDir, "gnupg/S.gpg-agent.ssh")
 		}
-		socketFile = path.Join(runtimeDir, "gnupg/S.gpg-agent.ssh")
+	}
+
+	if socketFile == "" {
+		log.Error("Cannot watch SSH. $SSH_AUTH_SOCK is not defined, gpgconf --list-dirs agent-ssh-socket didn't help, and $XDG_RUNTIME_DIR is not defined.")
+		return
 	}
 
 	if _, err := os.Stat(socketFile); err != nil {

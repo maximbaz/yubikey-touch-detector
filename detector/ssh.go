@@ -16,11 +16,12 @@ func WatchSSH(requestGPGCheck chan bool, exits *sync.Map) {
 	socketFile := os.Getenv("SSH_AUTH_SOCK")
 
 	if socketFile == "" {
-		gpgAgentSocket, err := exec.Command("gpgconf", "--list-dirs", "agent-ssh-socket").Output()
+		gpgAgentSocket, err := exec.Command("gpgconf", "--list-dirs", "agent-ssh-socket").CombinedOutput()
+		gpgAgentSocketOutput := strings.TrimSpace(string(gpgAgentSocket))
 		if err != nil {
-			log.Error(err)
-		} else if len(gpgAgentSocket) != 0 {
-			socketFile = strings.TrimSuffix(string(gpgAgentSocket), "\n")
+			log.Errorf("Cannot find SSH socket using gpgconf, error: %v, stderr: %v", err, gpgAgentSocketOutput)
+		} else {
+			socketFile = gpgAgentSocketOutput
 		}
 	}
 

@@ -12,9 +12,9 @@ require (
 	github.com/vtolstov/go-ioctl v0.0.0-20151206205506-6be9cced4810
 )
 
-replace github.com/proglottis/gpgme => github.com/mcha-forks/gpgme v0.1.4-0.20230930202035-21b7c62d7377
+replace github.com/proglottis/gpgme => github.com/mcha-forks/gpgme v0.1.4-0.20240305014421-a24b3c53ec19
 
 require (
 	github.com/deckarep/golang-set v1.8.0
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )

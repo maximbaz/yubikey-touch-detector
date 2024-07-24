@@ -83,7 +83,8 @@ func main() {
 
 			requestGPGCheck := make(chan bool)
 			go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
-			go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
+			// go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
+			go detector.WatchGPGV2(requestGPGCheck, exits)
 			go detector.WatchSSH(requestGPGCheck, exits)
 		} else {
 			log.Debugf("'%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)

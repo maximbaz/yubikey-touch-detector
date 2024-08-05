@@ -32,6 +32,14 @@ Alternatively you can download the latest release from the [GitHub releases](htt
 
 Finally you can install the app with `go`:
 
+### Prequisites for building locally
+
+- gpgme
+
+```
+sudo apt install libgpgme-dev 
+```
+
 - For Go <1.17
 
 ```

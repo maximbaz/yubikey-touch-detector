@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -78,19 +79,48 @@ func main() {
 	} else if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
 		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
 	} else {
-		gpgPubringPath := path.Join(gpgme.GetDirInfo("homedir"), "pubring.kbx")
-		if _, err := os.Stat(gpgPubringPath); err == nil {
-
-			requestGPGCheck := make(chan bool)
-			go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
-			go detector.WatchGPG(gpgPubringPath, requestGPGCheck)
-			go detector.WatchSSH(requestGPGCheck, exits)
-		} else {
-			log.Debugf("'%v' could not be found. Disabling GPG and SSH watchers.", gpgPubringPath)
+		var gpgPrivateKeysDirPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
+		if _, err := os.Stat(gpgPrivateKeysDirPath); err != nil {
+			log.Debugf("Directory '%s' does not exist or cannot stat it\n", gpgPrivateKeysDirPath)
+			return
 		}
+		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath)
+		if err != nil {
+			log.Debugf("Error finding shadowed private keys: %v\n", err)
+			return
+		}
+		if len(filesToWatch) == 0 {
+			log.Debugf("No shadowed private keys found.\n")
+			return
+		}
+		requestGPGCheck := make(chan bool)
+		go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
+		go detector.WatchGPG(filesToWatch, requestGPGCheck)
+		go detector.WatchSSH(requestGPGCheck, exits)
 	}
 	wait := make(chan bool)
 	<-wait
+}
+
+func findShadowedPrivateKeys(folderPath string) ([]string, error) {
+	var result []string
+	err := filepath.WalkDir(folderPath, func(path string, info os.DirEntry, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), "shadowed-private-key") {
+			result = append(result, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func setupExitSignalWatch(exits *sync.Map) {

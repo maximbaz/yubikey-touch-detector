@@ -80,8 +80,8 @@ func main() {
 		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
 	} else {
 		var gpgPrivateKeysDirPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
-		if _, err := os.Stat(gpgPrivateKeysDirPath); os.IsNotExist(err) {
-			log.Debugf("Directory '%s' does not exist (you have no private keys).\n", gpgPrivateKeysDirPath)
+		if _, err := os.Stat(gpgPrivateKeysDirPath); err != nil {
+			log.Debugf("Directory '%s' does not exist or cannot stat it\n", gpgPrivateKeysDirPath)
 			return
 		}
 		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath)

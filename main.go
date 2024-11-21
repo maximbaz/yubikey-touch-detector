@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -80,14 +79,14 @@ func main() {
 	} else if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
 		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
 	} else {
-		var gpgPubringPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
-		if _, err := os.Stat(gpgPubringPath); os.IsNotExist(err) {
-			fmt.Printf("Directory '%s' does not exist (you have no private keys).\n", gpgPubringPath)
+		var gpgPrivateKeysDirPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
+		if _, err := os.Stat(gpgPrivateKeysDirPath); os.IsNotExist(err) {
+			log.Debugf("Directory '%s' does not exist (you have no private keys).\n", gpgPrivateKeysDirPath)
 			return
 		}
-		var searchTerm = "shadowed-private-key"
+		searchTerm := "shadowed-private-key"
 		var filesToWatch []string
-		filesToWatch, err := findMatchingFiles(gpgPubringPath, searchTerm)
+		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath, searchTerm)
 		if err != nil {
 			fmt.Printf("Error finding files: %v\n", err)
 			return
@@ -105,32 +104,18 @@ func main() {
 	<-wait
 }
 
-func findMatchingFiles(folderPath, term string) ([]string, error) {
+func findShadowedPrivateKeys(folderPath, term string) ([]string, error) {
 	var result []string
 	err := filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		if info.IsDir() {
-			return nil
-		}
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.Contains(line, term) {
-				result = append(result, path)
-				break // No need to scan further lines if we already found the string
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			return err
+		if strings.Contains(string(data), term) {
+			result = append(result, path)
 		}
 		return nil
 	})

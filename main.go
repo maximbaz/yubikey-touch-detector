@@ -18,7 +18,7 @@ import (
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
 )
 
-const appVersion = "1.11.0"
+const appVersion = "1.12.0"
 
 func main() {
 	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}

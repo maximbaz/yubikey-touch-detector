@@ -84,15 +84,13 @@ func main() {
 			log.Debugf("Directory '%s' does not exist (you have no private keys).\n", gpgPrivateKeysDirPath)
 			return
 		}
-		searchTerm := "shadowed-private-key"
-		var filesToWatch []string
-		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath, searchTerm)
+		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath)
 		if err != nil {
-			fmt.Printf("Error finding files: %v\n", err)
+			log.Debugf("Error finding shadowed private keys: %v\n", err)
 			return
 		}
 		if len(filesToWatch) == 0 {
-			fmt.Printf("No files matching the term '%s' found.\n", searchTerm)
+			log.Debugf("No shadowed private keys found.\n")
 			return
 		}
 		requestGPGCheck := make(chan bool)
@@ -104,9 +102,9 @@ func main() {
 	<-wait
 }
 
-func findShadowedPrivateKeys(folderPath, term string) ([]string, error) {
+func findShadowedPrivateKeys(folderPath string) ([]string, error) {
 	var result []string
-	err := filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(folderPath, func(path string, info os.DirEntry, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
@@ -114,7 +112,7 @@ func findShadowedPrivateKeys(folderPath, term string) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if strings.Contains(string(data), term) {
+		if strings.Contains(string(data), "shadowed-private-key") {
 			result = append(result, path)
 		}
 		return nil

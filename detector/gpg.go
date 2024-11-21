@@ -13,12 +13,14 @@ import (
 
 // WatchGPG watches for hints that YubiKey is maybe waiting for a touch on a GPG request
 func WatchGPG(filesToWatch []string, requestGPGCheck chan bool) {
+	// No need for a buffered channel,
+	// we are interested only in the first event, it's ok to skip all subsequent ones
 	events := make(chan notify.EventInfo)
 
 	initWatcher := func() {
 		for _, file := range filesToWatch {
 			if err := notify.Watch(file, events, notify.InOpen, notify.InDeleteSelf, notify.InMoveSelf); err != nil {
-				log.Errorf("Failed to watch file '%s': %v\n", file, err)
+				log.Errorf("Failed to establish a watch on GPG file '%s': %v\n", file, err)
 				return
 			}
 			log.Debugf("GPG watcher is watching '%s'...\n", file)

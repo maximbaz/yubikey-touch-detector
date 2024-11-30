@@ -12,12 +12,9 @@ export CGO_CXXFLAGS := ${CXXFLAGS}
 export CGO_LDFLAGS := ${LDFLAGS}
 export GOFLAGS := -buildmode=pie -trimpath -ldflags=-linkmode=external
 
-.PHONY: local
-local: vendor build
-
 .PHONY: run
-run: local
-	go run main.go
+run: build
+	./$(BIN)
 
 .PHONY: build
 build: main.go detector/ notifier/

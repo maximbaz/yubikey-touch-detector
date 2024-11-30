@@ -73,33 +73,45 @@ func main() {
 
 	go detector.WatchU2F(notifiers)
 	go detector.WatchHMAC(notifiers)
+	initGPGBasedDetectors(notifiers, exits)
 
-	if ctx, err := gpgme.New(); err != nil {
-		log.Debugf("Cannot initialize GPG context: %v. Disabling GPG and SSH watchers.", err)
-	} else if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
-		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
-	} else {
-		var gpgPrivateKeysDirPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
-		if _, err := os.Stat(gpgPrivateKeysDirPath); err != nil {
-			log.Debugf("Directory '%s' does not exist or cannot stat it\n", gpgPrivateKeysDirPath)
-			return
-		}
-		filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath)
-		if err != nil {
-			log.Debugf("Error finding shadowed private keys: %v\n", err)
-			return
-		}
-		if len(filesToWatch) == 0 {
-			log.Debugf("No shadowed private keys found.\n")
-			return
-		}
-		requestGPGCheck := make(chan bool)
-		go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
-		go detector.WatchGPG(filesToWatch, requestGPGCheck)
-		go detector.WatchSSH(requestGPGCheck, exits)
-	}
 	wait := make(chan bool)
 	<-wait
+}
+
+func initGPGBasedDetectors(notifiers, exits *sync.Map) {
+	ctx, err := gpgme.New()
+	if err != nil {
+		log.Debugf("Cannot initialize GPG context: %v. Disabling GPG and SSH watchers.", err)
+		return
+	}
+
+	if ctx.SetProtocol(gpgme.ProtocolAssuan) != nil {
+		log.Debugf("Cannot initialize Assuan IPC: %v. Disabling GPG and SSH watchers.", err)
+		return
+	}
+
+	var gpgPrivateKeysDirPath = path.Join(gpgme.GetDirInfo("homedir"), "private-keys-v1.d")
+	if _, err := os.Stat(gpgPrivateKeysDirPath); err != nil {
+		log.Debugf("Directory '%s' does not exist or cannot stat it\n", gpgPrivateKeysDirPath)
+		return
+	}
+
+	filesToWatch, err := findShadowedPrivateKeys(gpgPrivateKeysDirPath)
+	if err != nil {
+		log.Debugf("Error finding shadowed private keys: %v\n", err)
+		return
+	}
+
+	if len(filesToWatch) == 0 {
+		log.Debugf("No shadowed private keys found.\n")
+		return
+	}
+
+	requestGPGCheck := make(chan bool)
+	go detector.CheckGPGOnRequest(requestGPGCheck, notifiers, ctx)
+	go detector.WatchGPG(filesToWatch, requestGPGCheck)
+	go detector.WatchSSH(requestGPGCheck, exits)
 }
 
 func findShadowedPrivateKeys(folderPath string) ([]string, error) {

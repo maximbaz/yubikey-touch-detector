@@ -1,5 +1,5 @@
 BIN := yubikey-touch-detector
-VERSION := $(shell sed -nr 's/.*appVersion[ \t]*=[ \t]*"(.*)".*/\1/p' main.go)
+VERSION := $(shell sed -nr 's/const appVersion\s*=\s*"(.*)"/\1/p' main.go)
 
 PREFIX ?= /usr
 LIB_DIR = $(DESTDIR)$(PREFIX)/lib

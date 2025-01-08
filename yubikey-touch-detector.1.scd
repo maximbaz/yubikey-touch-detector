@@ -66,6 +66,12 @@ _U2F_1_
 _U2F_0_
 	When a U2F operation stops waiting for a touch.
 
+_MAC_1_
+	When a HMAC operation starts waiting for a touch.
+
+_MAC_0_
+	When a HMAC operation stops waiting for a touch.
+
 # SEE ALSO
 
 ykman, pam_u2f(8)

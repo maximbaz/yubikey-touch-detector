@@ -37,7 +37,7 @@ Finally you can install the app with `go`:
 - gpgme
 
 ```
-sudo apt install libgpgme-dev 
+sudo apt install libgpgme-dev
 ```
 
 - For Go <1.17
@@ -97,12 +97,14 @@ Next, in order to integrate the app with other UI components to display a visibl
 
 `unix_socket` notifier allows anyone to connect to the socket `$XDG_RUNTIME_DIR/yubikey-touch-detector.socket` and receive the following events:
 
-| event   | description                                        |
-| ------- | -------------------------------------------------- |
-| `GPG_1` | when a `gpg` operation started waiting for a touch |
-| `GPG_0` | when a `gpg` operation stopped waiting for a touch |
-| `U2F_1` | when a `u2f` operation started waiting for a touch |
-| `U2F_0` | when a `u2f` operation stopped waiting for a touch |
+| event   | description                                         |
+| ------- | --------------------------------------------------- |
+| `GPG_1` | when a `gpg` operation started waiting for a touch  |
+| `GPG_0` | when a `gpg` operation stopped waiting for a touch  |
+| `U2F_1` | when a `u2f` operation started waiting for a touch  |
+| `U2F_0` | when a `u2f` operation stopped waiting for a touch  |
+| `MAC_1` | when a `hmac` operation started waiting for a touch |
+| `MAC_0` | when a `hmac` operation stopped waiting for a touch |
 
 All messages have a fixed length of 5 bytes to simplify the code on the receiving side.
 
@@ -116,6 +118,7 @@ Your YubiKey may require a physical touch to confirm these operations:
 - `gpg --decrypt`
 - `ssh` to a remote host (and related operations, such as `scp`, `rsync`, etc.)
 - `ssh` on a remote host to a different remote host (via forwarded `ssh-agent`)
+- `HMAC` operations
 
 _See also: [FAQ: How do I configure my YubiKey to require a physical touch?](#faq-configure-yubikey-require-touch)_
 
@@ -129,20 +132,24 @@ See `detector/u2f.go` for more info on implementation details, the source code i
 
 This detection is based on a "busy check" - when the card is busy (i.e. `gpg --card-status` hangs), it is assumed that it is waiting on a touch. This of course leads to false positives, when the card is busy for other reasons, but it is a good guess anyway.
 
-In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after `$GNUPGHOME/pubring.kbx` (or `$HOME/.gnupg/pubring.kbx`) file is opened (the app is thus watching for `OPEN` events on that file).
+In order to not run the `gpg --card-status` indefinitely (which leads to YubiKey be constantly blinking), the check is being performed only after any shadowed private key files inside `$GNUPGHOME/private-keys-v1.d/*` are opened (the app is thus watching for `OPEN` events on those files).
 
-> If the path to your `pubring.kbx` file differs, define `$GNUPGHOME` environment variable, globally or in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`.
+> If the path to your `private-keys-v1.d` folder differs, define `$GNUPGHOME` environment variable, globally or in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf`.
 
 Since v1.11.0 we started using `gpgme` to perform some operations above:
 
 - we are now using Assuan protocol to query card status, instead of spawning `gpg --card-status` processes.
-- we are now querying path to `pubring.kbx` from `gpgme`.
+- we are now querying path to `$GNUPGHOME` from `gpgme`.
 
 ### Detecting ssh operations
 
 The requests performed on a local host will be captured by the `gpg` detector. However, in order to detect the use of forwarded `ssh-agent` on a remote host, an additional detector was introduced.
 
 This detector runs as a proxy on the `$SSH_AUTH_SOCK`, it listens to all communications with that socket and starts a `gpg --card-status` check in case an event was captured.
+
+### Detecting HMAC operations
+
+This detection is based on the observation that a certain `/dev/hidraw*` device will disappear when YubiKey will start waiting for a HMAC, and reappear when it stops waiting for a touch.
 
 ## FAQ
 

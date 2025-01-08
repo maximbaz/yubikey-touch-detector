@@ -61,6 +61,7 @@ func WatchU2F(notifiers *sync.Map) {
 
 	if devices, err := os.ReadDir("/dev"); err == nil {
 		for _, device := range devices {
+			log.Debugf("== u2f: ranging over devices, device: %v", device.Name())
 			checkAndInitWatcher(path.Join("/dev", device.Name()))
 		}
 	} else {
@@ -68,6 +69,7 @@ func WatchU2F(notifiers *sync.Map) {
 	}
 
 	for event := range devicesEvents {
+		log.Debugf("== u2f: ranging over deviceEvents, event: %v", event.Path())
 		// Give a second for device to initialize before establishing a watcher
 		time.Sleep(1 * time.Second)
 		checkAndInitWatcher(event.Path())
@@ -156,6 +158,7 @@ func runU2FWatcher(devicePath string, notifiers *sync.Map) {
 		val2b := (int(payload[7]) << 8) | int(payload[8])
 		isU2F := payload[4] == CTAPHID_MSG && val2b == U2F_SW_CONDITIONS_NOT_SATISFIED
 		isFIDO2 := payload[4] == CTAPHID_KEEPALIVE && val1b == STATUS_UPNEEDED
+		log.Debugf("== u2f: read a new payload from device %v, isU2f=%v | isFIDO2=%v", devicePath, isU2F, isFIDO2)
 
 		// Cancel previous U2F_OFF timer
 		if u2fOffTimer != nil {

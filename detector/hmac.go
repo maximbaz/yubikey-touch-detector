@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/deckarep/golang-set"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
 
@@ -23,6 +23,7 @@ func WatchHMAC(notifiers *sync.Map) {
 	yubikeyHidrawDevices := mapset.NewSet()
 	if devices, err := os.ReadDir("/dev"); err == nil {
 		for _, device := range devices {
+			log.Debugf("== hmac: ranging over devices, device: %v", device.Name())
 			devicePath := path.Join("/dev", device.Name())
 			if isYubikeyHidrawDevice(devicePath) {
 				yubikeyHidrawDevices.Add(devicePath)
@@ -35,6 +36,7 @@ func WatchHMAC(notifiers *sync.Map) {
 	lastMessage := notifier.HMAC_OFF
 	var onRemoveTimer *time.Timer
 	for event := range devicesEvents {
+		log.Debugf("== hmac: ranging over deviceEvents, event: %v", event.Event())
 		switch event.Event() {
 		case notify.Create:
 			if onRemoveTimer != nil {

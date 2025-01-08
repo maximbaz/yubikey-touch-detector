@@ -3,3 +3,4 @@ dist
 vendor
 .direnv
 result
+/yubikey-touch-detector.1

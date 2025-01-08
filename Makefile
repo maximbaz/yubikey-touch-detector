@@ -17,8 +17,11 @@ run: build
 	./$(BIN)
 
 .PHONY: build
-build: main.go detector/ notifier/
+build: main.go detector/ notifier/ yubikey-touch-detector.1
 	go build -o $(BIN) main.go
+
+yubikey-touch-detector.1: yubikey-touch-detector.1.scd
+	scdoc < '$<' > '$@'
 
 .PHONY: vendor
 vendor:
@@ -62,3 +65,4 @@ install:
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE
 	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" README.md
 	install -Dm644 -t "$(SHARE_DIR)/doc/$(BIN)/" service.conf.example
+	install -Dm644 -t "$(SHARE_DIR)/man/man1/" yubikey-touch-detector.1

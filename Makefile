@@ -1,5 +1,5 @@
 BIN := yubikey-touch-detector
-VERSION := $(shell sed -nr 's/const appVersion\s*=\s*"(.*)"/\1/p' main.go)
+VERSION := $(shell git describe --tags)
 
 PREFIX ?= /usr
 LIB_DIR = $(DESTDIR)$(PREFIX)/lib
@@ -35,25 +35,15 @@ clean:
 	rm -rf vendor
 
 .PHONY: dist
-dist: clean vendor build
-	$(eval TMP := $(shell mktemp -d))
-	mkdir "$(TMP)/$(BIN)-$(VERSION)"
-	cp -r * "$(TMP)/$(BIN)-$(VERSION)"
-	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
-
-	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	cp "$(BIN)" "$(BIN).service" "$(BIN).socket" LICENSE README.md "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
-
+dist: clean vendor
 	mkdir -p dist
-	mv "$(TMP)/$(BIN)-$(VERSION)"-*.tar.gz dist
 	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
+	git archive -o "dist/$(BIN)-$(VERSION)-src.tar.gz" --format tar.gz $$(find vendor -type f -printf '--prefix=$(BIN)-$(VERSION)/%h/ --add-file=%p ') --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
 
 	for file in dist/*; do \
 	    gpg --detach-sign --armor "$$file"; \
 	done
 
-	rm -rf "$(TMP)"
 	rm -f "dist/$(BIN)-$(VERSION).tar.gz"
 
 .PHONY: install

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"path/filepath"
@@ -17,8 +18,6 @@ import (
 	"github.com/maximbaz/yubikey-touch-detector/detector"
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
 )
-
-const appVersion = "1.12.3"
 
 func main() {
 	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}
@@ -42,7 +41,7 @@ func main() {
 	flag.Parse()
 
 	if version {
-		fmt.Println("YubiKey touch detector version:", appVersion)
+		fmt.Println("YubiKey touch detector version:", appVersion())
 		os.Exit(0)
 	}
 
@@ -151,4 +150,16 @@ func setupExitSignalWatch(exits *sync.Map) {
 
 	log.Debug("Stopping YubiKey touch detector")
 	os.Exit(0)
+}
+
+func appVersion() string {
+	version := "$Format:%(describe)$"
+	if strings.HasPrefix(version, "$") {
+		out, err := exec.Command("git", "describe", "--tags").Output()
+		if err != nil {
+			panic(fmt.Sprintf("Failed to determine version using 'git describe': %v", err))
+		}
+		version = strings.TrimSpace(string(out))
+	}
+	return version
 }

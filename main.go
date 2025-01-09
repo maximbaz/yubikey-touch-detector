@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
 	"path/filepath"
@@ -18,6 +17,9 @@ import (
 	"github.com/maximbaz/yubikey-touch-detector/detector"
 	"github.com/maximbaz/yubikey-touch-detector/notifier"
 )
+
+// Override with -ldflags "-X main.version=xxx" when compiling not from a git-archive tarball
+var version = "$Format:%(describe)$"
 
 func main() {
 	truthyValues := map[string]bool{"true": true, "yes": true, "1": true}
@@ -153,13 +155,8 @@ func setupExitSignalWatch(exits *sync.Map) {
 }
 
 func appVersion() string {
-	version := "$Format:%(describe)$"
 	if strings.HasPrefix(version, "$") {
-		out, err := exec.Command("git", "describe", "--tags").Output()
-		if err != nil {
-			panic(fmt.Sprintf("Failed to determine version using 'git describe': %v", err))
-		}
-		version = strings.TrimSpace(string(out))
+		return "unknown"
 	}
 	return version
 }

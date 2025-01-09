@@ -1,6 +1,6 @@
-yubikey-touch-detector
-dist
-vendor
-.direnv
-result
+/dist
+/vendor
+/yubikey-touch-detector
 /yubikey-touch-detector.1
+/.direnv
+/result

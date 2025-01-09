@@ -50,7 +50,7 @@
 
             vendorHash = "sha256-x8Fmhsk6MtgAtLxgH/V3KusM0BXAOaSU+2HULR5boJQ=";
 
-            nativeBuildInputs = with pkgs; [ pkg-config ];
+            nativeBuildInputs = with pkgs; [ pkg-config scdoc ];
 
             buildInputs = with pkgs; [ libnotify gpgme ];
           };
@@ -63,7 +63,8 @@
         in
         {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ go gopls gotools go-tools ];
+            nativeBuildInputs = with pkgs; [ pkg-config scdoc go gopls gotools go-tools ];
+            buildInputs = with pkgs; [ libnotify gpgme ];
           };
         });
 

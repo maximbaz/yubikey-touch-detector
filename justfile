@@ -5,8 +5,8 @@ version := `git describe --tags`
 
 release: clean vendor
     mkdir -p dist
-    git archive -o "dist/{{app}}-{{version}}.tar.gz" --format tar.gz --prefix "{{app}}-{{version}}/" "{{version}}"
-    git archive -o "dist/{{app}}-{{version}}-src.tar.gz" --format tar.gz `find vendor -type f -printf '--prefix={{app}}-{{version}}/%h/ --add-file=%p '` --prefix "{{app}}-{{version}}/" "{{version}}"
+    git -c tar.tar.gz.command="gzip -cn" archive -o "dist/{{app}}-{{version}}.tar.gz" --format tar.gz --prefix "{{app}}-{{version}}/" "{{version}}"
+    git -c tar.tar.gz.command="gzip -cn" archive -o "dist/{{app}}-{{version}}-src.tar.gz" --format tar.gz `find vendor -type f -printf '--prefix={{app}}-{{version}}/%h/ --add-file=%p '` --prefix "{{app}}-{{version}}/" "{{version}}"
 
     for file in dist/*; do \
         gpg --detach-sign --armor "$file"; \

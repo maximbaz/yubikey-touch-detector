@@ -84,6 +84,7 @@ The app supports the following environment variables and CLI arguments (CLI args
 | `YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY` | `--libnotify` |
 | `YUBIKEY_TOUCH_DETECTOR_STDOUT`    | `--stdout`    |
 | `YUBIKEY_TOUCH_DETECTOR_NOSOCKET`  | `--no-socket` |
+| `YUBIKEY_TOUCH_DETECTOR_DBUS`      | `--dbus`      |
 
 You can configure the systemd service by defining any of these environment variables in `$XDG_CONFIG_HOME/yubikey-touch-detector/service.conf` - see `service.conf.example` for a configuration example.
 
@@ -107,6 +108,12 @@ Next, in order to integrate the app with other UI components to display a visibl
 | `MAC_0` | when a `hmac` operation stopped waiting for a touch |
 
 All messages have a fixed length of 5 bytes to simplify the code on the receiving side.
+
+##### notifier/dbus
+
+`dbus` notifier registers a dbus server at the interface name `com.github.maximbaz.YubikeyTouchDetector` and path `/com/github/maximbaz/YubikeyTouchDetector`.
+
+Properties on this dbus interface are discoverable through introspection. Properties also emit PropertiesChanged signals to indicate updates and support gobject binding.
 
 ## How it works
 

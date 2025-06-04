@@ -28,18 +28,21 @@ func main() {
 	envLibnotify := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_LIBNOTIFY"))]
 	envStdout := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_STDOUT"))]
 	envNosocket := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_NOSOCKET"))]
+	envDbus := truthyValues[strings.ToLower(os.Getenv("YUBIKEY_TOUCH_DETECTOR_DBUS"))]
 
 	var version bool
 	var verbose bool
 	var libnotify bool
 	var stdout bool
 	var nosocket bool
+	var dbus bool
 
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&verbose, "v", envVerbose, "enable debug logging")
 	flag.BoolVar(&libnotify, "libnotify", envLibnotify, "show desktop notifications using libnotify")
 	flag.BoolVar(&stdout, "stdout", envStdout, "print notifications to stdout")
 	flag.BoolVar(&nosocket, "no-socket", envNosocket, "disable unix socket notifier")
+	flag.BoolVar(&dbus, "dbus", envDbus, "enable dbus server for IPC")
 	flag.Parse()
 
 	if version {
@@ -70,6 +73,9 @@ func main() {
 	}
 	if stdout {
 		go notifier.SetupStdoutNotifier(notifiers)
+	}
+	if dbus {
+		go notifier.SetupDbusNotifier(notifiers)
 	}
 
 	go detector.WatchU2F(notifiers)
